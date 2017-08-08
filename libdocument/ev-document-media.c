@@ -1,7 +1,7 @@
-/* ev-document-print.c
+/* ev-document-media.c
  *  this file is part of evince, a gnome document_links viewer
  *
- * Copyright (C) 2009 Carlos Garcia Campos  <carlosgc@gnome.org>
+ * Copyright (C) 2015 Igalia S.L.
  *
  * Evince is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
@@ -18,24 +18,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#include "config.h"
+#include <config.h>
+#include "ev-document-media.h"
 
-#include "ev-document.h"
-#include "ev-document-print.h"
-
-G_DEFINE_INTERFACE (EvDocumentPrint, ev_document_print, 0)
+G_DEFINE_INTERFACE (EvDocumentMedia, ev_document_media, 0)
 
 static void
-ev_document_print_default_init (EvDocumentPrintInterface *klass)
+ev_document_media_default_init (EvDocumentMediaInterface *klass)
 {
 }
 
-void
-ev_document_print_print_page (EvDocumentPrint *document_print,
-			      EvPage          *page,
-			      cairo_t         *cr)
+EvMappingList *
+ev_document_media_get_media_mapping (EvDocumentMedia *document_media,
+                                     EvPage           *page)
 {
-	EvDocumentPrintInterface *iface = EV_DOCUMENT_PRINT_GET_IFACE (document_print);
+	EvDocumentMediaInterface *iface = EV_DOCUMENT_MEDIA_GET_IFACE (document_media);
 
-	iface->print_page (document_print, page, cr);
+	return iface->get_media_mapping (document_media, page);
 }

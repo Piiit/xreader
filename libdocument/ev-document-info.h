@@ -18,8 +18,8 @@
  *
  */
 
-#if !defined (__EV_XREADER_DOCUMENT_H_INSIDE__) && !defined (XREADER_COMPILATION)
-#error "Only <xreader-document.h> can be included directly."
+#if !defined (__EV_EVINCE_DOCUMENT_H_INSIDE__) && !defined (EVINCE_COMPILATION)
+#error "Only <evince-document.h> can be included directly."
 #endif
 
 #ifndef EV_DOCUMENT_INFO_H
@@ -67,10 +67,10 @@ typedef enum
 } EvDocumentUIHints;
 
 /* This define is needed because glib-mkenums chokes with multiple lines */
-#define PERMISSIONS_FULL (EV_DOCUMENT_PERMISSIONS_OK_TO_PRINT  \
-			| EV_DOCUMENT_PERMISSIONS_OK_TO_MODIFY \
-			| EV_DOCUMENT_PERMISSIONS_OK_TO_COPY   \
-			| EV_DOCUMENT_PERMISSIONS_OK_TO_ADD_NOTES)
+#define _PERMISSIONS_FULL (EV_DOCUMENT_PERMISSIONS_OK_TO_PRINT  \
+			 | EV_DOCUMENT_PERMISSIONS_OK_TO_MODIFY \
+			 | EV_DOCUMENT_PERMISSIONS_OK_TO_COPY   \
+			 | EV_DOCUMENT_PERMISSIONS_OK_TO_ADD_NOTES)
 
 typedef enum
 {
@@ -78,7 +78,7 @@ typedef enum
 	EV_DOCUMENT_PERMISSIONS_OK_TO_MODIFY = 1 << 1,
 	EV_DOCUMENT_PERMISSIONS_OK_TO_COPY = 1 << 2,
 	EV_DOCUMENT_PERMISSIONS_OK_TO_ADD_NOTES = 1 << 3,
-	EV_DOCUMENT_PERMISSIONS_FULL = PERMISSIONS_FULL
+	EV_DOCUMENT_PERMISSIONS_FULL = _PERMISSIONS_FULL
 } EvDocumentPermissions;
 
 typedef enum
@@ -100,7 +100,7 @@ typedef enum
 	EV_DOCUMENT_INFO_N_PAGES = 1 << 14,
 	EV_DOCUMENT_INFO_SECURITY = 1 << 15,
 	EV_DOCUMENT_INFO_PAPER_SIZE = 1 << 16,
-	EV_DOCUMENT_INFO_LICENSE = 1 << 17,
+	EV_DOCUMENT_INFO_LICENSE = 1 << 17
 
 } EvDocumentInfoFields;
 

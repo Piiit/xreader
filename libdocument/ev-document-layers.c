@@ -1,14 +1,14 @@
 /* ev-document-layers.c
- *  this file is part of xreader, a mate document_links viewer
+ *  this file is part of evince, a gnome document_links viewer
  * 
  * Copyright (C) 2008 Carlos Garcia Campos  <carlosgc@gnome.org>
  *
- * Xreader is free software; you can redistribute it and/or modify it
+ * Evince is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Xreader is distributed in the hope that it will be useful, but
+ * Evince is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -38,6 +38,12 @@ ev_document_layers_has_layers (EvDocumentLayers *document_layers)
 	return iface->has_layers (document_layers);
 }
 
+/**
+ * ev_document_layers_get_layers:
+ * @document_layers: an #EvDocumentLayers
+ *
+ * Returns: (transfer full): a #GtkTreeModel
+ */
 GtkTreeModel *
 ev_document_layers_get_layers (EvDocumentLayers *document_layers)
 {

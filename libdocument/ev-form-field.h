@@ -1,14 +1,14 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8; c-indent-level: 8 -*- */
-/* this file is part of xreader, a mate document viewer
+/* this file is part of evince, a gnome document viewer
  *
  *  Copyright (C) 2006 Julien Rebetez
  *
- * Xreader is free software; you can redistribute it and/or modify it
+ * Evince is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Xreader is distributed in the hope that it will be useful, but
+ * Evince is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#if !defined (__EV_XREADER_DOCUMENT_H_INSIDE__) && !defined (XREADER_COMPILATION)
-#error "Only <xreader-document.h> can be included directly."
+#if !defined (__EV_EVINCE_DOCUMENT_H_INSIDE__) && !defined (EVINCE_COMPILATION)
+#error "Only <evince-document.h> can be included directly."
 #endif
 
 #ifndef EV_FORM_FIELD_H
@@ -28,6 +28,7 @@
 #include <glib-object.h>
 
 #include "ev-document.h"
+#include "ev-link.h"
 
 G_BEGIN_DECLS
 
@@ -108,6 +109,7 @@ struct _EvFormField
 	gint     id;
 	gboolean is_read_only;
 	gdouble  font_size;
+	EvLink  *activation_link;
 
 	EvPage  *page;
 	gboolean changed;
@@ -120,7 +122,7 @@ struct _EvFormFieldClass
 	
 struct _EvFormFieldText
 {
-	EvFormField partent;
+	EvFormField parent;
 	
 	EvFormFieldTextType type;
 	
@@ -136,12 +138,12 @@ struct _EvFormFieldText
 
 struct _EvFormFieldTextClass
 {
-	EvFormFieldClass partent_class;
+	EvFormFieldClass parent_class;
 };
 
 struct _EvFormFieldButton
 {
-	EvFormField partent;
+	EvFormField parent;
 	
 	EvFormFieldButtonType type;
 
@@ -150,12 +152,12 @@ struct _EvFormFieldButton
 
 struct _EvFormFieldButtonClass
 {
-	EvFormFieldClass partent_class;
+	EvFormFieldClass parent_class;
 };
 
 struct _EvFormFieldChoice
 {
-	EvFormField partent;
+	EvFormField parent;
 
 	EvFormFieldChoiceType type;
 	
@@ -170,19 +172,19 @@ struct _EvFormFieldChoice
 
 struct _EvFormFieldChoiceClass
 {
-	EvFormFieldClass partent_class;
+	EvFormFieldClass parent_class;
 };
 
 struct _EvFormFieldSignature
 {
-	EvFormField partent;
+	EvFormField parent;
 	
 	/* TODO */
 };
 
 struct _EvFormFieldSignatureClass
 {
-	EvFormFieldClass partent_class;
+	EvFormFieldClass parent_class;
 };
 
 /* EvFormField base class */

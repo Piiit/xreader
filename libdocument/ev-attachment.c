@@ -1,13 +1,13 @@
-/* this file is part of xreader, a mate document viewer
+/* this file is part of evince, a gnome document viewer
  *
  *  Copyright (C) 2006 Carlos Garcia Campos <carlosgc@gnome.org>
  *
- * Xreader is free software; you can redistribute it and/or modify it
+ * Evince is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Xreader is distributed in the hope that it will be useful, but
+ * Evince is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -20,7 +20,7 @@
 #include <config.h>
 #include <glib/gi18n-lib.h>
 #include <glib/gstdio.h>
-#include <gdk/gdk.h>
+#include <gtk/gtk.h>
 #include "ev-file-helpers.h"
 #include "ev-attachment.h"
 
@@ -162,7 +162,8 @@ ev_attachment_class_init (EvAttachmentClass *klass)
 							      "The attachment name",
 							      NULL,
 							      G_PARAM_WRITABLE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_DESCRIPTION,
 					 g_param_spec_string ("description",
@@ -170,7 +171,8 @@ ev_attachment_class_init (EvAttachmentClass *klass)
 							      "The attachment description",
 							      NULL,
 							      G_PARAM_WRITABLE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_MTIME,
 					 g_param_spec_ulong ("mtime",
@@ -178,7 +180,8 @@ ev_attachment_class_init (EvAttachmentClass *klass)
 							     "The attachment modification date",
 							     0, G_MAXULONG, 0,
 							     G_PARAM_WRITABLE |
-							     G_PARAM_CONSTRUCT_ONLY));
+							     G_PARAM_CONSTRUCT_ONLY |
+                                                             G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_CTIME,
 					 g_param_spec_ulong ("ctime",
@@ -186,7 +189,8 @@ ev_attachment_class_init (EvAttachmentClass *klass)
 							     "The attachment creation date",
 							     0, G_MAXULONG, 0,
 							     G_PARAM_WRITABLE |
-							     G_PARAM_CONSTRUCT_ONLY));
+							     G_PARAM_CONSTRUCT_ONLY |
+                                                             G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_SIZE,
 					 g_param_spec_uint ("size",
@@ -194,14 +198,16 @@ ev_attachment_class_init (EvAttachmentClass *klass)
 							    "The attachment size",
 							    0, G_MAXUINT, 0,
 							    G_PARAM_WRITABLE |
-							    G_PARAM_CONSTRUCT_ONLY));
+							    G_PARAM_CONSTRUCT_ONLY |
+                                                            G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_DATA,
 					 g_param_spec_pointer ("data",
 							       "Data",
 							       "The attachment data",
 							       G_PARAM_WRITABLE |
-							       G_PARAM_CONSTRUCT_ONLY));
+							       G_PARAM_CONSTRUCT_ONLY |
+                                                               G_PARAM_STATIC_STRINGS));
 	
 	g_object_class->finalize = ev_attachment_finalize;
 }
@@ -345,26 +351,26 @@ ev_attachment_launch_app (EvAttachment *attachment,
 			  guint32       timestamp,
 			  GError      **error)
 {
-	gboolean           result;
-	GList             *files = NULL;
+	gboolean             result;
+	GList               *files = NULL;
 	GdkAppLaunchContext *context;
-	GdkDisplay          *display;
-	GError            *ioerror = NULL;
+        GdkDisplay          *display;
+	GError              *ioerror = NULL;
 
 	g_assert (G_IS_FILE (attachment->priv->tmp_file));
 	g_assert (G_IS_APP_INFO (attachment->priv->app));
 
 	files = g_list_prepend (files, attachment->priv->tmp_file);
 
-	display = screen ? gdk_screen_get_display (screen) : gdk_display_get_default ();
+        display = screen ? gdk_screen_get_display (screen) : gdk_display_get_default ();
 	context = gdk_display_get_app_launch_context (display);
 	gdk_app_launch_context_set_screen (context, screen);
 	gdk_app_launch_context_set_timestamp (context, timestamp);
 
 	result = g_app_info_launch (attachment->priv->app, files,
-							    G_APP_LAUNCH_CONTEXT (context),
-							    &ioerror);
-	g_object_unref (context);
+				    G_APP_LAUNCH_CONTEXT (context),
+                                    &ioerror);
+        g_object_unref (context);
 
 	if (!result) {
 		g_set_error (error,

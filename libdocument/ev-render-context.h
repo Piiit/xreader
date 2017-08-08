@@ -1,13 +1,13 @@
-/* this file is part of xreader, a mate document viewer
+/* this file is part of evince, a gnome document viewer
  *
  *  Copyright (C) 2005 Jonathan Blandford <jrb@gnome.org>
  *
- * Xreader is free software; you can redistribute it and/or modify it
+ * Evince is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Xreader is distributed in the hope that it will be useful, but
+ * Evince is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#if !defined (__EV_XREADER_DOCUMENT_H_INSIDE__) && !defined (XREADER_COMPILATION)
-#error "Only <xreader-document.h> can be included directly."
+#if !defined (__EV_EVINCE_DOCUMENT_H_INSIDE__) && !defined (EVINCE_COMPILATION)
+#error "Only <evince-document.h> can be included directly."
 #endif
 
 #ifndef EV_RENDER_CONTEXT_H
@@ -50,6 +50,8 @@ struct _EvRenderContext
 	EvPage *page;
 	gint    rotation;
 	gdouble scale;
+	gint	target_width;
+	gint	target_height;
 };
 
 
@@ -63,7 +65,24 @@ void             ev_render_context_set_rotation    (EvRenderContext *rc,
 						    gint             rotation);
 void             ev_render_context_set_scale       (EvRenderContext *rc,
 						    gdouble          scale);
-
+void             ev_render_context_set_target_size (EvRenderContext *rc,
+                                                    int              target_width,
+                                                    int              target_height);
+void             ev_render_context_compute_scaled_size      (EvRenderContext *rc,
+                                                             double           width_points,
+                                                             double           height_points,
+                                                             int             *scaled_width,
+                                                             int             *scaled_height);
+void             ev_render_context_compute_transformed_size (EvRenderContext *rc,
+                                                             double	      width_points,
+                                                             double	      height_points,
+                                                             int	     *transformed_width,
+                                                             int	     *transformed_height);
+void             ev_render_context_compute_scales  (EvRenderContext *rc,
+                                                    double           width_points,
+                                                    double           height_points,
+                                                    double          *scale_x,
+                                                    double          *scale_y);
 
 G_END_DECLS
 

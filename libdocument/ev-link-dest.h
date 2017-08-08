@@ -1,14 +1,14 @@
-/* this file is part of xreader, a mate document viewer
+/* this file is part of evince, a gnome document viewer
  *
  *  Copyright (C) 2006 Carlos Garcia Campos <carlosgc@gnome.org>
  *  Copyright (C) 2005 Red Hat, Inc.
  *
- * Xreader is free software; you can redistribute it and/or modify it
+ * Evince is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Xreader is distributed in the hope that it will be useful, but
+ * Evince is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#if !defined (__EV_XREADER_DOCUMENT_H_INSIDE__) && !defined (XREADER_COMPILATION)
-#error "Only <xreader-document.h> can be included directly."
+#if !defined (__EV_EVINCE_DOCUMENT_H_INSIDE__) && !defined (EVINCE_COMPILATION)
+#error "Only <evince-document.h> can be included directly."
 #endif
 
 #ifndef EV_LINK_DEST_H
@@ -49,7 +49,6 @@ typedef enum {
 	EV_LINK_DEST_TYPE_FITR,
 	EV_LINK_DEST_TYPE_NAMED,
 	EV_LINK_DEST_TYPE_PAGE_LABEL,
-	EV_LINK_DEST_TYPE_HLINK,
 	EV_LINK_DEST_TYPE_UNKNOWN
 } EvLinkDestType; 
 
@@ -90,7 +89,6 @@ EvLinkDest     *ev_link_dest_new_fitr       (gint         page,
 					     gdouble      top);
 EvLinkDest     *ev_link_dest_new_named      (const gchar *named_dest);
 EvLinkDest     *ev_link_dest_new_page_label (const gchar *page_label);
-EvLinkDest     *ev_link_dest_new_hlink      (const gchar* hlink,gint page);
 
 gboolean        ev_link_dest_equal          (EvLinkDest  *a,
                                              EvLinkDest  *b);

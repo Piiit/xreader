@@ -19,8 +19,8 @@
  *  $Id$
  */
 
-#if !defined (__EV_XREADER_DOCUMENT_H_INSIDE__) && !defined (XREADER_COMPILATION)
-#error "Only <xreader-document.h> can be included directly."
+#if !defined (__EV_EVINCE_DOCUMENT_H_INSIDE__) && !defined (EVINCE_COMPILATION)
+#error "Only <evince-document.h> can be included directly."
 #endif
 
 #ifndef EV_DOCUMENT_MISC_H
@@ -30,18 +30,40 @@
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
+#include "ev-macros.h"
 
 G_BEGIN_DECLS
 
+EV_DEPRECATED
 GdkPixbuf *ev_document_misc_get_thumbnail_frame  (int           width,
 						  int           height,
 						  GdkPixbuf    *source_pixbuf);
+EV_DEPRECATED
 GdkPixbuf *ev_document_misc_get_loading_thumbnail (int      width,
 						   int      height,
 						   gboolean inverted_colors);
+
+GdkPixbuf *ev_document_misc_render_loading_thumbnail    (GtkWidget *widget,
+							 int        width,
+							 int        height,
+							 gboolean   inverted_colors);
+GdkPixbuf *ev_document_misc_render_thumbnail_with_frame (GtkWidget *widget,
+							 GdkPixbuf *source_pixbuf);
+
+cairo_surface_t *ev_document_misc_render_loading_thumbnail_surface (GtkWidget *widget,
+								    int        width,
+								    int        height,
+								    gboolean   inverted_colors);
+cairo_surface_t *ev_document_misc_render_thumbnail_surface_with_frame (GtkWidget       *widget,
+								       cairo_surface_t *source_surface,
+								       int              width,
+								       int              height);
+
+EV_DEPRECATED
 void       ev_document_misc_get_page_border_size (gint          page_width,
 						  gint          page_height,
 						  GtkBorder    *border);
+EV_DEPRECATED
 void       ev_document_misc_paint_one_page       (cairo_t      *cr,
 						  GtkWidget    *widget,
 						  GdkRectangle *area,
@@ -58,7 +80,7 @@ cairo_surface_t *ev_document_misc_surface_rotate_and_scale (cairo_surface_t *sur
 void             ev_document_misc_invert_surface (cairo_surface_t *surface);
 void		 ev_document_misc_invert_pixbuf  (GdkPixbuf       *pixbuf);
 
-gdouble          ev_document_misc_get_screen_dpi (GdkScreen *screen, gint monitor);
+gdouble          ev_document_misc_get_screen_dpi (GdkScreen *screen);
 
 gchar           *ev_document_misc_format_date (GTime utime);
 

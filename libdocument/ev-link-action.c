@@ -1,14 +1,14 @@
-/* this file is part of xreader, a mate document viewer
+/* this file is part of evince, a gnome document viewer
  *
  *  Copyright (C) 2006 Carlos Garcia Campos <carlosgc@gnome.org>
  *  Copyright (C) 2005 Red Hat, Inc.
  *
- * Xreader is free software; you can redistribute it and/or modify it
+ * Evince is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Xreader is distributed in the hope that it will be useful, but
+ * Evince is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -70,6 +70,12 @@ ev_link_action_get_action_type (EvLinkAction *self)
 	return self->priv->type;
 }
 
+/**
+ * ev_link_action_get_dest:
+ * @self: an #EvLinkAction
+ *
+ * Returns: (transfer none): an #EvLinkDest
+ */
 EvLinkDest *
 ev_link_action_get_dest (EvLinkAction *self)
 {
@@ -110,6 +116,12 @@ ev_link_action_get_name (EvLinkAction *self)
 	return self->priv->name;
 }
 
+/**
+ * ev_link_action_get_show_list:
+ * @self: an #EvLinkAction
+ *
+ * Returns: (transfer none) (element-type EvLayer): a list of #EvLayer objects
+ */
 GList *
 ev_link_action_get_show_list (EvLinkAction *self)
 {
@@ -118,6 +130,12 @@ ev_link_action_get_show_list (EvLinkAction *self)
 	return self->priv->show_list;
 }
 
+/**
+ * ev_link_action_get_hide_list:
+ * @self: an #EvLinkAction
+ *
+ * Returns: (transfer none) (element-type EvLayer): a list of #EvLayer objects
+ */
 GList *
 ev_link_action_get_hide_list (EvLinkAction *self)
 {
@@ -126,6 +144,12 @@ ev_link_action_get_hide_list (EvLinkAction *self)
 	return self->priv->hide_list;
 }
 
+/**
+ * ev_link_action_get_toggle_list:
+ * @self: an #EvLinkAction
+ *
+ * Returns: (transfer none) (element-type EvLayer): a list of #EvLayer objects
+ */
 GList *
 ev_link_action_get_toggle_list (EvLinkAction *self)
 {
@@ -312,16 +336,17 @@ ev_link_action_class_init (EvLinkActionClass *ev_link_action_class)
 							     EV_TYPE_LINK_ACTION_TYPE,
 							     EV_LINK_ACTION_TYPE_GOTO_DEST,
 							     G_PARAM_READWRITE |
-							     G_PARAM_CONSTRUCT_ONLY));
+							     G_PARAM_CONSTRUCT_ONLY |
+                                                             G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_DEST,
 					 g_param_spec_object ("dest",
-							       "Action destination",
-							       "The link action destination",
-							       EV_TYPE_LINK_DEST,
-							       G_PARAM_READWRITE |
-							       G_PARAM_CONSTRUCT_ONLY |
-							       G_PARAM_STATIC_STRINGS));
+							      "Action destination",
+							      "The link action destination",
+							      EV_TYPE_LINK_DEST,
+							      G_PARAM_READWRITE |
+							      G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_URI,
 					 g_param_spec_string ("uri",
@@ -329,7 +354,8 @@ ev_link_action_class_init (EvLinkActionClass *ev_link_action_class)
 							      "The link action URI",
 							      NULL,
 							      G_PARAM_READWRITE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_FILENAME,
 					 g_param_spec_string ("filename",
@@ -337,7 +363,8 @@ ev_link_action_class_init (EvLinkActionClass *ev_link_action_class)
 							      "The link action filename",
 							      NULL,
 							      G_PARAM_READWRITE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_PARAMS,
 					 g_param_spec_string ("params",
@@ -345,7 +372,8 @@ ev_link_action_class_init (EvLinkActionClass *ev_link_action_class)
 							      "The link action params",
 							      NULL,
 							      G_PARAM_READWRITE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_NAME,
 					 g_param_spec_string ("name",
@@ -353,28 +381,32 @@ ev_link_action_class_init (EvLinkActionClass *ev_link_action_class)
 							      "The link action name",
 							      NULL,
 							      G_PARAM_READWRITE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_SHOW_LIST,
 					 g_param_spec_pointer ("show-list",
 							       "ShowList",
 							       "The list of layers that should be shown",
 							       G_PARAM_READWRITE |
-							       G_PARAM_CONSTRUCT_ONLY));
+							       G_PARAM_CONSTRUCT_ONLY |
+                                                               G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_HIDE_LIST,
 					 g_param_spec_pointer ("hide-list",
 							       "HideList",
 							       "The list of layers that should be hidden",
 							       G_PARAM_READWRITE |
-							       G_PARAM_CONSTRUCT_ONLY));
+							       G_PARAM_CONSTRUCT_ONLY |
+                                                               G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_TOGGLE_LIST,
 					 g_param_spec_pointer ("toggle-list",
 							       "ToggleList",
 							       "The list of layers that should be toggled",
 							       G_PARAM_READWRITE |
-							       G_PARAM_CONSTRUCT_ONLY));
+							       G_PARAM_CONSTRUCT_ONLY |
+                                                               G_PARAM_STATIC_STRINGS));
 }
 
 EvLinkAction *
@@ -426,6 +458,14 @@ ev_link_action_new_named (const gchar *name)
 					     NULL));
 }
 
+/**
+ * ev_link_action_new_layers_state:
+ * @show_list: (element-type EvLayer): a list of #EvLayer objects
+ * @hide_list: (element-type EvLayer): a list of #EvLayer objects
+ * @toggle_list: (element-type EvLayer): a list of #EvLayer objects
+ *
+ * Returns: (transfer full): a new #EvLinkAction
+ */
 EvLinkAction *
 ev_link_action_new_layers_state (GList *show_list,
 				 GList *hide_list,
@@ -439,45 +479,51 @@ ev_link_action_new_layers_state (GList *show_list,
 					     NULL));
 }
 
+/**
+ * ev_link_action_equal:
+ * @a: a #EvLinkAction
+ * @b: a #EvLinkAction
+ *
+ * Checks whether @a and @b are equal.
+ *
+ * Returns: %TRUE iff @a and @b are equal
+ *
+ * Since: 3.8
+ */
 gboolean
 ev_link_action_equal (EvLinkAction *a,
                       EvLinkAction *b)
 {
-	g_return_val_if_fail (EV_IS_LINK_ACTION (a), FALSE);
-	g_return_val_if_fail (EV_IS_LINK_ACTION (b), FALSE);
+        g_return_val_if_fail (EV_IS_LINK_ACTION (a), FALSE);
+        g_return_val_if_fail (EV_IS_LINK_ACTION (b), FALSE);
 
-	if (a == b)
-	{
-		return TRUE;
-	}
+        if (a == b)
+                return TRUE;
 
-	if (a->priv->type != b->priv->type)
-	{
-		return FALSE;
-	}
+        if (a->priv->type != b->priv->type)
+                return FALSE;
 
-	switch (a->priv->type)
-	{
-		case EV_LINK_ACTION_TYPE_GOTO_DEST:
-			return ev_link_dest_equal (a->priv->dest, b->priv->dest);
+        switch (a->priv->type) {
+        case EV_LINK_ACTION_TYPE_GOTO_DEST:
+                return ev_link_dest_equal (a->priv->dest, b->priv->dest);
 
-		case EV_LINK_ACTION_TYPE_GOTO_REMOTE:
-			return ev_link_dest_equal (a->priv->dest, b->priv->dest) &&
-									   !g_strcmp0 (a->priv->filename, b->priv->filename);
+        case EV_LINK_ACTION_TYPE_GOTO_REMOTE:
+                return ev_link_dest_equal (a->priv->dest, b->priv->dest) &&
+                        !g_strcmp0 (a->priv->filename, b->priv->filename);
 
-		case EV_LINK_ACTION_TYPE_EXTERNAL_URI:
-			return !g_strcmp0 (a->priv->uri, b->priv->uri);
+        case EV_LINK_ACTION_TYPE_EXTERNAL_URI:
+                return !g_strcmp0 (a->priv->uri, b->priv->uri);
 
-		case EV_LINK_ACTION_TYPE_LAUNCH:
-			return !g_strcmp0 (a->priv->filename, b->priv->filename) &&
-				   !g_strcmp0 (a->priv->params, b->priv->params);
+        case EV_LINK_ACTION_TYPE_LAUNCH:
+                return !g_strcmp0 (a->priv->filename, b->priv->filename) &&
+                        !g_strcmp0 (a->priv->params, b->priv->params);
 
-		case EV_LINK_ACTION_TYPE_NAMED:
-			return !g_strcmp0 (a->priv->name, b->priv->name);
+        case EV_LINK_ACTION_TYPE_NAMED:
+                return !g_strcmp0 (a->priv->name, b->priv->name);
 
-		default:
-			return FALSE;
-	}
+        default:
+                return FALSE;
+        }
 
-	return FALSE;
+        return FALSE;
 }

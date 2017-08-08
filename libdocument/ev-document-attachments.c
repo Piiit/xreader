@@ -1,14 +1,14 @@
 /* ev-document-attachments.c
- *  this file is part of xreader, a mate document_links viewer
+ *  this file is part of evince, a gnome document_links viewer
  *
  * Copyright (C) 2009 Carlos Garcia Campos  <carlosgc@gnome.org>
  *
- * Xreader is free software; you can redistribute it and/or modify it
+ * Evince is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Xreader is distributed in the hope that it will be useful, but
+ * Evince is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -38,6 +38,12 @@ ev_document_attachments_has_attachments (EvDocumentAttachments *document_attachm
 	return iface->has_attachments (document_attachments);
 }
 
+/**
+ * ev_document_attachments_get_attachments:
+ * @document_attachments: an #EvDocumentAttachments
+ *
+ * Returns: (transfer full) (element-type EvAttachment): a list of #EvAttachment objects
+ */
 GList *
 ev_document_attachments_get_attachments (EvDocumentAttachments *document_attachments)
 {

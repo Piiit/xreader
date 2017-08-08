@@ -17,8 +17,8 @@
  *
  */
 
-#if !defined (__EV_XREADER_DOCUMENT_H_INSIDE__) && !defined (XREADER_COMPILATION)
-#error "Only <xreader-document.h> can be included directly."
+#if !defined (__EV_EVINCE_DOCUMENT_H_INSIDE__) && !defined (EVINCE_COMPILATION)
+#error "Only <evince-document.h> can be included directly."
 #endif
 
 #ifndef EV_FILE_HELPERS_H
@@ -40,12 +40,12 @@ void        _ev_file_helpers_init     (void);
 
 void        _ev_file_helpers_shutdown (void);
 
-int          ev_mkstemp               (const char        *template,
+int          ev_mkstemp               (const char        *tmpl,
                                        char             **file_name,
                                        GError           **error);
-GFile       *ev_mkstemp_file          (const char        *template,
+GFile       *ev_mkstemp_file          (const char        *tmpl,
                                        GError           **error);
-gchar       *ev_mkdtemp               (const char        *template,
+gchar       *ev_mkdtemp               (const char        *tmpl,
                                        GError           **error);
 void         ev_tmp_filename_unlink   (const gchar       *filename);
 void         ev_tmp_file_unlink       (GFile             *file);
@@ -54,6 +54,9 @@ gboolean     ev_file_is_temp          (GFile             *file);
 gboolean     ev_xfer_uri_simple       (const char        *from,
 				       const char        *to,
 				       GError           **error);
+gboolean     ev_file_copy_metadata    (const char        *from,
+                                       const char        *to,
+                                       GError           **error);
 
 gchar       *ev_file_get_mime_type    (const gchar       *uri,
 				       gboolean           fast,

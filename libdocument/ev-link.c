@@ -1,14 +1,14 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8; c-indent-level: 8 -*- */
-/* this file is part of xreader, a mate document viewer
+/* this file is part of evince, a gnome document viewer
  *
  *  Copyright (C) 2005 Red Hat, Inc.
  *
- * Xreader is free software; you can redistribute it and/or modify it
+ * Evince is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Xreader is distributed in the hope that it will be useful, but
+ * Evince is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -54,6 +54,12 @@ ev_link_get_title (EvLink *self)
 	return self->priv->title;
 }
 
+/**
+ * ev_link_get_action:
+ * @self: an #EvLink
+ *
+ * Returns: (transfer none): an #EvLinkAction
+ */
 EvLinkAction *
 ev_link_get_action (EvLink *self)
 {
@@ -157,16 +163,17 @@ ev_link_class_init (EvLinkClass *ev_window_class)
 				     			      "The link title",
 							      NULL,
 							      G_PARAM_READWRITE |
-				     			      G_PARAM_CONSTRUCT_ONLY));
+				     			      G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_ACTION,
 					 g_param_spec_object ("action",
-							       "Link Action",
-							       "The link action",
-							       EV_TYPE_LINK_ACTION,
-							       G_PARAM_READWRITE |
-							       G_PARAM_CONSTRUCT_ONLY |
-							       G_PARAM_STATIC_STRINGS));
+							      "Link Action",
+							      "The link action",
+							      EV_TYPE_LINK_ACTION,
+							      G_PARAM_READWRITE |
+							      G_PARAM_CONSTRUCT_ONLY |
+							      G_PARAM_STATIC_STRINGS));
 }
 
 EvLink *
@@ -178,3 +185,5 @@ ev_link_new (const char   *title,
 				      "action", action,
 				      NULL));
 }
+
+

@@ -1,6 +1,6 @@
 /*
  * ev-debug.c
- * This file is part of Xreader
+ * This file is part of Evince
  *
  * Copyright (C) 1998, 1999 Alex Roberts, Evan Lawrence
  * Copyright (C) 2000, 2001 Chema Celorio, Paolo Maggi
@@ -30,37 +30,49 @@
  * $Id: gedit-debug.c 4809 2006-04-08 14:46:31Z pborelli $
  */
 
-/* Modified by Xreader Team */
+/* Modified by Evince Team */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
 #include <stdio.h>
+#include <string.h>
 
 #include "ev-debug.h"
 
 #ifdef EV_ENABLE_DEBUG
 static EvDebugSection ev_debug = EV_NO_DEBUG;
 static EvProfileSection ev_profile = EV_NO_PROFILE;
+static EvDebugBorders ev_debug_borders = EV_DEBUG_BORDER_NONE;
 
 static GHashTable *timers = NULL;
 
 static void
-debug_init ()
+debug_init (void)
 {
-	if (g_getenv ("EV_DEBUG") != NULL) {
-		/* enable all debugging */
-		ev_debug = ~EV_NO_DEBUG;
-		return;
-	}
+        const GDebugKey keys[] = {
+                { "jobs",    EV_DEBUG_JOBS         },
+                { "borders", EV_DEBUG_SHOW_BORDERS }
+        };
+        const GDebugKey border_keys[] = {
+                { "chars",      EV_DEBUG_BORDER_CHARS      },
+                { "links",      EV_DEBUG_BORDER_LINKS      },
+                { "forms",      EV_DEBUG_BORDER_FORMS      },
+                { "annots",     EV_DEBUG_BORDER_ANNOTS     },
+                { "images",     EV_DEBUG_BORDER_IMAGES     },
+                { "media",      EV_DEBUG_BORDER_MEDIA      },
+                { "selections", EV_DEBUG_BORDER_SELECTIONS }
+        };
 
-	if (g_getenv ("EV_DEBUG_JOBS") != NULL)
-		ev_debug |= EV_DEBUG_JOBS;
+        ev_debug = g_parse_debug_string (g_getenv ("EV_DEBUG"), keys, G_N_ELEMENTS (keys));
+        if (ev_debug & EV_DEBUG_SHOW_BORDERS)
+                ev_debug_borders = g_parse_debug_string (g_getenv ("EV_DEBUG_SHOW_BORDERS"),
+                                                         border_keys, G_N_ELEMENTS (border_keys));
 }
 
 static void
-profile_init ()
+profile_init (void)
 {
 	if (g_getenv ("EV_PROFILE") != NULL) {
 		/* enable all profiling */
@@ -79,14 +91,14 @@ profile_init ()
 }
 
 void
-_ev_debug_init ()
+_ev_debug_init (void)
 {
 	debug_init ();
 	profile_init ();
 }
 
 void
-_ev_debug_shutdown ()
+_ev_debug_shutdown (void)
 {
 	if (timers) {
 		g_hash_table_destroy (timers);
@@ -172,6 +184,12 @@ ev_profiler_stop (EvProfileSection section,
 		g_print ("[ %s ] %f s elapsed\n", name, seconds);
 		fflush (stdout);
 	}
+}
+
+EvDebugBorders
+ev_debug_get_debug_borders (void)
+{
+        return ev_debug_borders;
 }
 
 #endif /* EV_ENABLE_DEBUG */

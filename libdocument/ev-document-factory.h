@@ -18,8 +18,8 @@
  *
  */
 
-#if !defined (__EV_XREADER_DOCUMENT_H_INSIDE__) && !defined (XREADER_COMPILATION)
-#error "Only <xreader-document.h> can be included directly."
+#if !defined (__EV_EVINCE_DOCUMENT_H_INSIDE__) && !defined (EVINCE_COMPILATION)
+#error "Only <evince-document.h> can be included directly."
 #endif
 
 #ifndef EV_DOCUMENT_FACTORY_H
@@ -31,7 +31,20 @@
 
 G_BEGIN_DECLS
 
+gboolean   _ev_document_factory_init         (void);
+void       _ev_document_factory_shutdown     (void);
+
 EvDocument* ev_document_factory_get_document (const char *uri, GError **error);
+EvDocument* ev_document_factory_get_document_for_gfile (GFile *file,
+                                                        EvDocumentLoadFlags flags,
+                                                        GCancellable *cancellable,
+                                                        GError **error);
+EvDocument* ev_document_factory_get_document_for_stream (GInputStream *stream,
+                                                         const char *mime_type,
+                                                         EvDocumentLoadFlags flags,
+                                                         GCancellable *cancellable,
+                                                         GError **error);
+
 void 	    ev_document_factory_add_filters  (GtkWidget *chooser, EvDocument *document);
 
 G_END_DECLS

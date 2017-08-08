@@ -84,8 +84,8 @@ _ev_tmp_dir (GError **error)
 {
 
         if (tmp_dir == NULL) {
-                const gchar *prgname;
                 gchar *dirname;
+                const gchar *prgname;
 
                 prgname = g_get_prgname ();
                 dirname = g_strdup_printf ("%s-%u", prgname ? prgname : "unknown", getpid ());
@@ -116,17 +116,17 @@ _ev_file_helpers_shutdown (void)
 
 /**
  * ev_mkstemp:
- * @template: a template string; must contain 'XXXXXX', but not necessarily as a suffix
+ * @tmpl: a template string; must contain 'XXXXXX', but not necessarily as a suffix
  * @file_name: a location to store the filename of the temp file
  * @error: a location to store a #GError
  *
- * Creates a temp file in the xreader temp directory.
+ * Creates a temp file in the evince temp directory.
  *
  * Returns: a file descriptor to the newly created temp file name, or %-1
  *   on error with @error filled in
  */
 int
-ev_mkstemp (const char  *template,
+ev_mkstemp (const char  *tmpl,
             char       **file_name,
             GError     **error)
 {
@@ -137,7 +137,7 @@ ev_mkstemp (const char  *template,
         if ((tmp = _ev_tmp_dir (error)) == NULL)
               return -1;
 
-        name = g_build_filename (tmp, template, NULL);
+        name = g_build_filename (tmp, tmpl, NULL);
         fd = g_mkstemp (name);
 
         if (fd == -1) {
@@ -167,23 +167,23 @@ close_fd_cb (gpointer fdptr)
 
 /**
  * ev_mkstemp_file:
- * @template: a template string; must contain 'XXXXXX', but not necessarily as a suffix
+ * @tmpl: a template string; must contain 'XXXXXX', but not necessarily as a suffix
  * @error: a location to store a #GError
  *
- * Creates a temp #GFile in the xreader temp directory. See ev_mkstemp() for more information.
+ * Creates a temp #GFile in the evince temp directory. See ev_mkstemp() for more information.
  *
- * Returns: a newly allocated #GFile for the newly created temp file name, or %NULL
+ * Returns: (transfer full): a newly allocated #GFile for the newly created temp file name, or %NULL
  *   on error with @error filled in
  */
 GFile *
-ev_mkstemp_file (const char        *template,
+ev_mkstemp_file (const char        *tmpl,
                  GError           **error)
 {
         char *file_name;
         int fd;
         GFile *file;
 
-        fd = ev_mkstemp (template, &file_name, error);
+        fd = ev_mkstemp (tmpl, &file_name, error);
         if (fd == -1)
                 return NULL;
 
@@ -196,15 +196,15 @@ ev_mkstemp_file (const char        *template,
         return file;
 }
 
-/**
+/*
  * This function is copied from
  * http://bugzilla.gnome.org/show_bug.cgi?id=524831
  * and renamed from g_mkdtemp to _ev_g_mkdtemp.
  *
  * If/when this function gets added to glib, it can be removed from
- * xreader' sources.
- *
- *
+ * evince' sources.
+ */
+/**
  * g_mkdtemp:
  * @tmpl: template directory name
  *
@@ -283,16 +283,16 @@ _ev_g_mkdtemp (gchar *tmpl)
 
 /**
  * ev_mkdtemp:
- * @template: a template string; must end in 'XXXXXX'
+ * @tmpl: a template string; must end in 'XXXXXX'
  * @error: a location to store a #GError
  *
- * Creates a temp directory in the xreader temp directory.
+ * Creates a temp directory in the evince temp directory.
  *
  * Returns: a newly allocated string with the temp directory name, or %NULL
  *   on error with @error filled in
  */
 gchar *
-ev_mkdtemp (const char        *template,
+ev_mkdtemp (const char        *tmpl,
             GError           **error)
 {
         const char *tmp;
@@ -301,7 +301,7 @@ ev_mkdtemp (const char        *template,
         if ((tmp = _ev_tmp_dir (error)) == NULL)
               return NULL;
 
-        name = g_build_filename (tmp, template, NULL);
+        name = g_build_filename (tmp, tmpl, NULL);
         if (_ev_g_mkdtemp (name) == NULL) {
 		int errsv = errno;
 
@@ -316,7 +316,7 @@ ev_mkdtemp (const char        *template,
         return name;
 }
 
-/* Remove a local temp file created by xreader */
+/* Remove a local temp file created by evince */
 void
 ev_tmp_filename_unlink (const gchar *filename)
 {
@@ -427,6 +427,45 @@ ev_xfer_uri_simple (const char *from,
 	return result;
 }
 
+/**
+ * ev_file_copy_metadata:
+ * @from: the source URI
+ * @to: the target URI
+ * @error: a #GError location to store an error, or %NULL
+ *
+ * Performs a g_file_copy_attributes() with %G_FILE_COPY_ALL_METADATA
+ * from @from to @to.
+ *
+ * Returns: %TRUE if the attributes were copied successfully, %FALSE otherwise.
+ *
+ * Since: 3.4
+ */
+gboolean
+ev_file_copy_metadata (const char *from,
+                       const char *to,
+                       GError     **error)
+{
+        GFile *source_file;
+        GFile *target_file;
+        gboolean result;
+
+        g_return_val_if_fail (from != NULL, FALSE);
+        g_return_val_if_fail (to != NULL, FALSE);
+
+        source_file = g_file_new_for_uri (from);
+        target_file = g_file_new_for_uri (to);
+
+        result = g_file_copy_attributes (source_file, target_file,
+                                         G_FILE_COPY_ALL_METADATA |
+                                         G_FILE_COPY_TARGET_DEFAULT_PERMS,
+                                         NULL, error);
+
+        g_object_unref (target_file);
+        g_object_unref (source_file);
+
+        return result;
+}
+
 static gchar *
 get_mime_type_from_uri (const gchar *uri, GError **error)
 {
@@ -445,8 +484,12 @@ get_mime_type_from_uri (const gchar *uri, GError **error)
 		return NULL;
 
 	content_type = g_file_info_get_content_type (file_info);
-	if (content_type) {
+	if (content_type != NULL) {
                 mime_type = g_content_type_get_mime_type (content_type);
+        }
+        if (mime_type == NULL) {
+                g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                                     _("Unknown MIME Type"));
         }
 
 	g_object_unref (file_info);
@@ -461,7 +504,8 @@ get_mime_type_from_data (const gchar *uri, GError **error)
 	gssize            size_read;
 	guchar            buffer[1024];
 	gboolean          retval;
-	gchar            *content_type, *mime_type;
+	gchar            *content_type;
+        gchar            *mime_type = NULL;
 
 	file = g_file_new_for_uri (uri);
 	
@@ -489,11 +533,30 @@ get_mime_type_from_data (const gchar *uri, GError **error)
 	content_type = g_content_type_guess (NULL, /* no filename */
 					     buffer, size_read,
 					     NULL);
-	if (!content_type)
-		return NULL;
+        if (content_type == NULL) {
+                g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                                     _("Unknown MIME Type"));
+                return NULL;
+        }
 
-	mime_type = g_content_type_get_mime_type (content_type);
-	g_free (content_type);
+#ifndef G_OS_WIN32
+       /* On Windows, the implementation of g_content_type_guess() is
+        * sometimes too limited, so we do use get_mime_type_from_uri()
+        * as a fallback */
+       if (strcmp (content_type, "*") == 0) {
+               g_free (content_type);
+               return get_mime_type_from_uri (uri, error);
+       }
+#endif /* G_OS_WIN32 */
+
+        mime_type = g_content_type_get_mime_type (content_type);
+        g_free (content_type);
+
+        if (mime_type == NULL) {
+                g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                                     _("Unknown MIME Type"));
+        }
+
 	return mime_type;
 }
 
@@ -503,9 +566,6 @@ get_mime_type_from_data (const gchar *uri, GError **error)
  * @fast: whether to use fast MIME type detection
  * @error: a #GError location to store an error, or %NULL
  *
- * Note: on unknown MIME types, this may return NULL without @error
- * being filled in.
- * 
  * Returns: a newly allocated string with the MIME type of the file at
  *   @uri, or %NULL on error or if the MIME type could not be determined
  */
@@ -570,7 +630,7 @@ compression_run (const gchar       *uri,
 	}
 
 	argv[0] = cmd;
-	argv[1] = compress ? "-c" : "-cd";
+	argv[1] = compress ? (char *) "-c" : (char *) "-cd";
 	argv[2] = filename;
 	argv[3] = NULL;
 

@@ -1,14 +1,14 @@
-/* this file is part of xreader, a mate document viewer
+/* this file is part of evince, a gnome document viewer
  *
  *  Copyright (C) 2006 Carlos Garcia Campos <carlosgc@gnome.org>
  *  Copyright (C) 2005 Red Hat, Inc.
  *
- * Xreader is free software; you can redistribute it and/or modify it
+ * Evince is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Xreader is distributed in the hope that it will be useful, but
+ * Evince is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -300,7 +300,8 @@ ev_link_dest_class_init (EvLinkDestClass *ev_link_dest_class)
 							     EV_TYPE_LINK_DEST_TYPE,
 							     EV_LINK_DEST_TYPE_UNKNOWN,
 							     G_PARAM_READWRITE |
-							     G_PARAM_CONSTRUCT_ONLY));
+							     G_PARAM_CONSTRUCT_ONLY |
+                                                             G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_PAGE,
 					 g_param_spec_int ("page",
@@ -310,7 +311,8 @@ ev_link_dest_class_init (EvLinkDestClass *ev_link_dest_class)
 							   G_MAXINT,
 							   0,
 							   G_PARAM_READWRITE |
-							   G_PARAM_CONSTRUCT_ONLY));
+							   G_PARAM_CONSTRUCT_ONLY |
+                                                           G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_LEFT,
 					 g_param_spec_double ("left",
@@ -320,7 +322,8 @@ ev_link_dest_class_init (EvLinkDestClass *ev_link_dest_class)
 							      G_MAXDOUBLE,
 							      0,
 							      G_PARAM_READWRITE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_TOP,
 					 g_param_spec_double ("top",
@@ -330,7 +333,8 @@ ev_link_dest_class_init (EvLinkDestClass *ev_link_dest_class)
 							      G_MAXDOUBLE,
 							      0,
 							      G_PARAM_READWRITE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_BOTTOM,
 					 g_param_spec_double ("bottom",
@@ -340,7 +344,8 @@ ev_link_dest_class_init (EvLinkDestClass *ev_link_dest_class)
 							      G_MAXDOUBLE,
 							      0,
 							      G_PARAM_READWRITE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_RIGHT,
 					 g_param_spec_double ("right",
@@ -350,7 +355,8 @@ ev_link_dest_class_init (EvLinkDestClass *ev_link_dest_class)
 							      G_MAXDOUBLE,
 							      0,
 							      G_PARAM_READWRITE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS));
 
 	g_object_class_install_property (g_object_class,
 					 PROP_ZOOM,
@@ -361,17 +367,19 @@ ev_link_dest_class_init (EvLinkDestClass *ev_link_dest_class)
 							      G_MAXDOUBLE,
 							      0,
 							      G_PARAM_READWRITE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_CHANGE,
 					 g_param_spec_uint ("change",
 							    "Change",
-							    "Whether top, left, and zoom should be changed",
+							    "Wether top, left, and zoom should be changed",
 							    0,
 							    G_MAXUINT,
 							    0,
 							    G_PARAM_READWRITE |
-							    G_PARAM_CONSTRUCT_ONLY));
+							    G_PARAM_CONSTRUCT_ONLY |
+                                                            G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_NAMED,
 					 g_param_spec_string ("named",
@@ -379,15 +387,17 @@ ev_link_dest_class_init (EvLinkDestClass *ev_link_dest_class)
 							      "The named destination",
 							      NULL,
 							      G_PARAM_READWRITE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_PAGE_LABEL,
-					 g_param_spec_string ("page_label",
+					 g_param_spec_string ("page-label",
 							      "Label of the page",
 							      "The label of the destination page",
 							      NULL,
 							      G_PARAM_READWRITE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS));
 }
 
 EvLinkDest *
@@ -510,75 +520,71 @@ ev_link_dest_new_page_label (const gchar *page_label)
 					   NULL));
 }
 
-EvLinkDest *
-ev_link_dest_new_hlink(const gchar* hlink,gint page)
-{
-	return EV_LINK_DEST(g_object_new(EV_TYPE_LINK_DEST,
-	                                  "named",hlink,
-	                                  "page",page,
-	                                  "type", EV_LINK_DEST_TYPE_HLINK,
-	                                  NULL));
-}
-
+/**
+ * ev_link_dest_equal:
+ * @a: a #EvLinkDest
+ * @b: a #EvLinkDest
+ *
+ * Checks whether @a and @b are equal.
+ *
+ * Returns: %TRUE iff @a and @b are equal
+ *
+ * Since: 3.8
+ */
 gboolean
 ev_link_dest_equal (EvLinkDest *a,
                     EvLinkDest *b)
 {
-	g_return_val_if_fail (EV_IS_LINK_DEST (a), FALSE);
-	g_return_val_if_fail (EV_IS_LINK_DEST (b), FALSE);
+        g_return_val_if_fail (EV_IS_LINK_DEST (a), FALSE);
+        g_return_val_if_fail (EV_IS_LINK_DEST (b), FALSE);
 
-	if (a == b)
-	{
-		return TRUE;
-	}
+        if (a == b)
+                return TRUE;
 
-	if (a->priv->type != b->priv->type)
-	{
-		return FALSE;
-	}
+        if (a->priv->type != b->priv->type)
+                return FALSE;
 
-	switch (a->priv->type)
-	{
-		case EV_LINK_DEST_TYPE_PAGE:
-			return a->priv->page == b->priv->page;
+        switch (a->priv->type) {
+        case EV_LINK_DEST_TYPE_PAGE:
+                return a->priv->page == b->priv->page;
 
-		case EV_LINK_DEST_TYPE_XYZ:
-			return a->priv->page == b->priv->page &&
-				   a->priv->left == b->priv->left &&
-				   a->priv->top == b->priv->top &&
-				   a->priv->zoom == b->priv->zoom &&
-				   a->priv->change == b->priv->change;
+        case EV_LINK_DEST_TYPE_XYZ:
+                return a->priv->page == b->priv->page &&
+                        a->priv->left == b->priv->left &&
+                        a->priv->top == b->priv->top &&
+                        a->priv->zoom == b->priv->zoom &&
+                        a->priv->change == b->priv->change;
 
-		case EV_LINK_DEST_TYPE_FIT:
-			return a->priv->page == b->priv->page;
+        case EV_LINK_DEST_TYPE_FIT:
+                return a->priv->page == b->priv->page;
 
-		case EV_LINK_DEST_TYPE_FITH:
-			return a->priv->page == b->priv->page &&
-				   a->priv->top == b->priv->top &&
-				   a->priv->change == b->priv->change;
+        case EV_LINK_DEST_TYPE_FITH:
+                return a->priv->page == b->priv->page &&
+                        a->priv->top == b->priv->top &&
+                        a->priv->change == b->priv->change;
 
-		case EV_LINK_DEST_TYPE_FITV:
-			return a->priv->page == b->priv->page &&
-				   a->priv->left == b->priv->left &&
-				   a->priv->change == b->priv->change;
+        case EV_LINK_DEST_TYPE_FITV:
+                return a->priv->page == b->priv->page &&
+                        a->priv->left == b->priv->left &&
+                        a->priv->change == b->priv->change;
 
-		case EV_LINK_DEST_TYPE_FITR:
-			return a->priv->page == b->priv->page &&
-				   a->priv->left == b->priv->left &&
-				   a->priv->top == b->priv->top &&
-				   a->priv->right == b->priv->right &&
-				   a->priv->bottom == b->priv->bottom &&
-				   a->priv->change == b->priv->change;
+        case EV_LINK_DEST_TYPE_FITR:
+                return a->priv->page == b->priv->page &&
+                        a->priv->left == b->priv->left &&
+                        a->priv->top == b->priv->top &&
+                        a->priv->right == b->priv->right &&
+                        a->priv->bottom == b->priv->bottom &&
+                        a->priv->change == b->priv->change;
 
-		case EV_LINK_DEST_TYPE_NAMED:
-			return !g_strcmp0 (a->priv->named, b->priv->named);
+        case EV_LINK_DEST_TYPE_NAMED:
+                return !g_strcmp0 (a->priv->named, b->priv->named);
 
-		case EV_LINK_DEST_TYPE_PAGE_LABEL:
-			return !g_strcmp0 (a->priv->page_label, b->priv->page_label);
+        case EV_LINK_DEST_TYPE_PAGE_LABEL:
+                return !g_strcmp0 (a->priv->page_label, b->priv->page_label);
 
-		default:
-			return FALSE;
-	}
+        default:
+                return FALSE;
+        }
 
-	return FALSE;
+        return FALSE;
 }

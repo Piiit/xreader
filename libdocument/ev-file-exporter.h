@@ -1,16 +1,16 @@
-/* this file is part of xreader, a mate document viewer
+/* this file is part of evince, a gnome document viewer
  *
  *  Copyright (C) 2004 Martin Kretzschmar
  *
  *  Author:
  *    Martin Kretzschmar <martink@gnome.org>
  *
- * Xreader is free software; you can redistribute it and/or modify it
+ * Evince is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Xreader is distributed in the hope that it will be useful, but
+ * Evince is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -20,8 +20,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#if !defined (__EV_XREADER_DOCUMENT_H_INSIDE__) && !defined (XREADER_COMPILATION)
-#error "Only <xreader-document.h> can be included directly."
+#if !defined (__EV_EVINCE_DOCUMENT_H_INSIDE__) && !defined (EVINCE_COMPILATION)
+#error "Only <evince-document.h> can be included directly."
 #endif
 
 #ifndef EV_FILE_EXPORTER_H
@@ -51,7 +51,9 @@ typedef enum {
 	EV_FILE_EXPORTER_CAN_NUMBER_UP    = 1 << 8
 } EvFileExporterCapabilities;
 
-typedef struct {
+typedef struct _EvFileExporterContext EvFileExporterContext;
+
+struct _EvFileExporterContext {
 	EvFileExporterFormat format;
 	const gchar         *filename;
 	gint                 first_page;
@@ -60,7 +62,7 @@ typedef struct {
 	gdouble              paper_height;
 	gboolean             duplex;
 	gint                 pages_per_sheet;
-} EvFileExporterContext;
+};
 
 #define EV_TYPE_FILE_EXPORTER            (ev_file_exporter_get_type ())
 #define EV_FILE_EXPORTER(o)              (G_TYPE_CHECK_INSTANCE_CAST ((o), EV_TYPE_FILE_EXPORTER, EvFileExporter))

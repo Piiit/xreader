@@ -1,15 +1,15 @@
 /* ev-annotation.c
- *  this file is part of xreader, a mate document viewer
+ *  this file is part of evince, a gnome document viewer
  *
  * Copyright (C) 2009 Carlos Garcia Campos <carlosgc@gnome.org>
  * Copyright (C) 2007 Iñigo Martinez <inigomartinez@gmail.com>
  *
- * Xreader is free software; you can redistribute it and/or modify it
+ * Evince is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Xreader is distributed in the hope that it will be useful, but
+ * Evince is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -35,6 +35,7 @@ struct _EvAnnotation {
 	gchar           *name;
 	gchar           *modified;
 	GdkRGBA          rgba;
+        EvRectangle      area;
 };
 
 struct _EvAnnotationClass {
@@ -66,9 +67,20 @@ struct _EvAnnotationAttachmentClass {
 	EvAnnotationClass parent_class;
 };
 
-static void ev_annotation_markup_default_init          (EvAnnotationMarkupInterface *iface);
-static void ev_annotation_text_markup_iface_init       (EvAnnotationMarkupInterface *iface);
-static void ev_annotation_attachment_markup_iface_init (EvAnnotationMarkupInterface *iface);
+struct _EvAnnotationTextMarkup {
+	EvAnnotation parent;
+
+        EvAnnotationTextMarkupType type;
+};
+
+struct _EvAnnotationTextMarkupClass {
+	EvAnnotationClass parent_class;
+};
+
+static void ev_annotation_markup_default_init           (EvAnnotationMarkupInterface *iface);
+static void ev_annotation_text_markup_iface_init        (EvAnnotationMarkupInterface *iface);
+static void ev_annotation_attachment_markup_iface_init  (EvAnnotationMarkupInterface *iface);
+static void ev_annotation_text_markup_markup_iface_init (EvAnnotationMarkupInterface *iface);
 
 /* EvAnnotation */
 enum {
@@ -78,7 +90,8 @@ enum {
 	PROP_ANNOT_NAME,
 	PROP_ANNOT_MODIFIED,
 	PROP_ANNOT_COLOR,
-    PROP_ANNOT_RGBA
+        PROP_ANNOT_RGBA,
+        PROP_ANNOT_AREA
 };
 
 /* EvAnnotationMarkup */
@@ -86,6 +99,7 @@ enum {
 	PROP_MARKUP_0,
 	PROP_MARKUP_LABEL,
 	PROP_MARKUP_OPACITY,
+	PROP_MARKUP_CAN_HAVE_POPUP,
 	PROP_MARKUP_HAS_POPUP,
 	PROP_MARKUP_RECTANGLE,
 	PROP_MARKUP_POPUP_IS_OPEN
@@ -102,6 +116,11 @@ enum {
 	PROP_ATTACHMENT_ATTACHMENT = PROP_MARKUP_POPUP_IS_OPEN + 1
 };
 
+/* EvAnnotationTextMarkup */
+enum {
+        PROP_TEXT_MARKUP_TYPE = PROP_MARKUP_POPUP_IS_OPEN + 1
+};
+
 G_DEFINE_ABSTRACT_TYPE (EvAnnotation, ev_annotation, G_TYPE_OBJECT)
 G_DEFINE_INTERFACE (EvAnnotationMarkup, ev_annotation_markup, EV_TYPE_ANNOTATION)
 G_DEFINE_TYPE_WITH_CODE (EvAnnotationText, ev_annotation_text, EV_TYPE_ANNOTATION,
@@ -113,6 +132,11 @@ G_DEFINE_TYPE_WITH_CODE (EvAnnotationAttachment, ev_annotation_attachment, EV_TY
 	 {
 		 G_IMPLEMENT_INTERFACE (EV_TYPE_ANNOTATION_MARKUP,
 					ev_annotation_attachment_markup_iface_init);
+	 });
+G_DEFINE_TYPE_WITH_CODE (EvAnnotationTextMarkup, ev_annotation_text_markup, EV_TYPE_ANNOTATION,
+	 {
+		 G_IMPLEMENT_INTERFACE (EV_TYPE_ANNOTATION_MARKUP,
+					ev_annotation_text_markup_markup_iface_init);
 	 });
 
 /* EvAnnotation */
@@ -148,6 +172,10 @@ static void
 ev_annotation_init (EvAnnotation *annot)
 {
 	annot->type = EV_ANNOTATION_TYPE_UNKNOWN;
+        annot->area.x1 = -1;
+        annot->area.y1 = -1;
+        annot->area.x2 = -1;
+        annot->area.y2 = -1;
 }
 
 static void
@@ -174,9 +202,12 @@ ev_annotation_set_property (GObject      *object,
 	case PROP_ANNOT_COLOR:
 		ev_annotation_set_color (annot, g_value_get_pointer (value));
 		break;
-    case PROP_ANNOT_RGBA:
-        ev_annotation_set_rgba (annot, g_value_get_boxed (value));
-        break;
+        case PROP_ANNOT_RGBA:
+                ev_annotation_set_rgba (annot, g_value_get_boxed (value));
+                break;
+        case PROP_ANNOT_AREA:
+                ev_annotation_set_area (annot, g_value_get_boxed (value));
+                break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 	}
@@ -201,15 +232,18 @@ ev_annotation_get_property (GObject    *object,
 		g_value_set_string (value, ev_annotation_get_modified (annot));
 		break;
 	case PROP_ANNOT_COLOR: {
-        GdkColor color;
+                GdkColor color;
 
-        ev_annotation_get_color (annot, &color);
-        g_value_set_pointer (value, &color);
-        break;
-    }
-	case PROP_ANNOT_RGBA:
-        g_value_set_boxed (value, &annot->rgba);
-        break;
+                ev_annotation_get_color (annot, &color);
+		g_value_set_pointer (value, &color);
+		break;
+        }
+        case PROP_ANNOT_RGBA:
+                g_value_set_boxed (value, &annot->rgba);
+                break;
+        case PROP_ANNOT_AREA:
+                g_value_set_boxed (value, &annot->area);
+                break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 	}
@@ -230,55 +264,76 @@ ev_annotation_class_init (EvAnnotationClass *klass)
 							      "Page",
 							      "The page wehere the annotation is",
 							      EV_TYPE_PAGE,
-							      G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY |
+                                                              G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_ANNOT_CONTENTS,
 					 g_param_spec_string ("contents",
 							      "Contents",
 							      "The annotation contents",
 							      NULL,
-							      G_PARAM_READWRITE));
+							      G_PARAM_READWRITE |
+                                                              G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_ANNOT_NAME,
 					 g_param_spec_string ("name",
 							      "Name",
 							      "The annotation unique name",
 							      NULL,
-							      G_PARAM_READWRITE));
+							      G_PARAM_READWRITE |
+                                                              G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_ANNOT_MODIFIED,
 					 g_param_spec_string ("modified",
 							      "Modified",
 							      "Last modified date as string",
 							      NULL,
-							      G_PARAM_READWRITE));
-    /**
-     * EvAnnotation:color:
-     *
-     * The colour of the annotation as a #GdkColor.
-     *
-     * Deprecated: 1.2.1: Use #EvAnnotation:rgba instead.
-     */
+							      G_PARAM_READWRITE |
+                                                              G_PARAM_STATIC_STRINGS));
+        /**
+         * EvAnnotation:color:
+         *
+         * The colour of the annotation as a #GdkColor.
+         *
+         * Deprecated: 3.6: Use #EvAnnotation:rgba instead.
+         */
 	g_object_class_install_property (g_object_class,
 					 PROP_ANNOT_COLOR,
 					 g_param_spec_pointer ("color",
 							       "Color",
 							       "The annotation color",
-							       G_PARAM_READWRITE));
+							       G_PARAM_READWRITE |
+                                                               G_PARAM_STATIC_STRINGS));
 
-    /**
-     * EvAnnotation:rgba:
-     *
-     * The colour of the annotation as a #GdkRGBA.
-     *
-     * Since: 1.2.1
-     */
-    g_object_class_install_property (g_object_class,
-                                     PROP_ANNOT_COLOR,
-                                     g_param_spec_boxed ("rgba", NULL, NULL,
-                                                         GDK_TYPE_RGBA,
-                                                         G_PARAM_READWRITE |
-                                                         G_PARAM_STATIC_STRINGS));
+        /**
+         * EvAnnotation:rgba:
+         *
+         * The colour of the annotation as a #GdkRGBA.
+         *
+         * Since: 3.6
+         */
+        g_object_class_install_property (g_object_class,
+                                         PROP_ANNOT_COLOR,
+                                         g_param_spec_boxed ("rgba", NULL, NULL,
+                                                             GDK_TYPE_RGBA,
+                                                             G_PARAM_READWRITE |
+                                                             G_PARAM_STATIC_STRINGS));
+
+        /**
+         * EvAnnotation:area:
+         *
+         * The area of the page where the annotation is placed.
+         *
+         * Since 3.18
+         */
+        g_object_class_install_property (g_object_class,
+                                         PROP_ANNOT_AREA,
+                                         g_param_spec_boxed ("area",
+                                                             "Area",
+                                                             "The area of the page where the annotation is placed",
+                                                             EV_TYPE_RECTANGLE,
+                                                             G_PARAM_READWRITE |
+                                                             G_PARAM_STATIC_STRINGS));
 }
 
 EvAnnotationType
@@ -524,23 +579,23 @@ ev_annotation_set_modified_from_time (EvAnnotation *annot,
  *
  * Get the color of @annot.
  *
- * Deprecated: 1.2.1: Use ev_annotation_get_rgba() instead.
+ * Deprecated: 3.6: Use ev_annotation_get_rgba() instead.
  */
 void
 ev_annotation_get_color (EvAnnotation *annot,
-                         GdkColor     *color)
+			 GdkColor     *color)
 {
-    GdkRGBA rgba;
+        GdkRGBA rgba;
 
-    g_return_if_fail (EV_IS_ANNOTATION (annot));
-    g_return_if_fail (color != NULL);
+	g_return_if_fail (EV_IS_ANNOTATION (annot));
+        g_return_if_fail (color != NULL);
 
-    ev_annotation_get_rgba (annot, &rgba);
+        ev_annotation_get_rgba (annot, &rgba);
 
-    color->pixel = 0;
-    color->red = CLAMP (rgba.red * 65535. + 0.5, 0, 65535);
-    color->green = CLAMP (rgba.green * 65535. + 0.5, 0, 65535);
-    color->blue = CLAMP (rgba.blue * 65535. + 0.5, 0, 65535);
+        color->pixel = 0;
+        color->red = CLAMP (rgba.red * 65535. + 0.5, 0, 65535);
+        color->green = CLAMP (rgba.green * 65535. + 0.5, 0, 65535);
+        color->blue = CLAMP (rgba.blue * 65535. + 0.5, 0, 65535);
 }
 
 /**
@@ -554,30 +609,29 @@ ev_annotation_get_color (EvAnnotation *annot,
  *
  * Returns: %TRUE  when the color has been changed, %FALSE otherwise.
  *
- * Deprecated: 1.2.1: Use ev_annotation_set_rgba() instead.
+ * Deprecated: 3.6: Use ev_annotation_set_rgba() instead.
  */
 gboolean
 ev_annotation_set_color (EvAnnotation   *annot,
-                         const GdkColor *color)
+			 const GdkColor *color)
 {
-    GdkColor annot_color;
-    GdkRGBA rgba;
+        GdkColor annot_color;
+        GdkRGBA rgba;
 
-    g_return_val_if_fail (EV_IS_ANNOTATION (annot), FALSE);
+	g_return_val_if_fail (EV_IS_ANNOTATION (annot), FALSE);
 
-    ev_annotation_get_color (annot, &annot_color);
-    if (color == NULL || gdk_color_equal (color, &annot_color))
-        return FALSE;
+        ev_annotation_get_color (annot, &annot_color);
+        if (color == NULL || gdk_color_equal (color, &annot_color))
+                return FALSE;
 
-    rgba.red = color->red / 65535.;
-    rgba.green = color->green / 65535.;
-    rgba.blue = color->blue / 65535.;
-    rgba.alpha = 1.;
+        rgba.red = color->red / 65535.;
+        rgba.green = color->green / 65535.;
+        rgba.blue = color->blue / 65535.;
+        rgba.alpha = 1.;
 
-    ev_annotation_set_rgba (annot, &rgba);
-    g_object_notify (G_OBJECT (annot), "color");
+        ev_annotation_set_rgba (annot, &rgba);
 
-    return TRUE;
+	return TRUE;
 }
 
 /**
@@ -587,16 +641,16 @@ ev_annotation_set_color (EvAnnotation   *annot,
  *
  * Gets the color of @annot.
  *
- * Since: 1.2.1
+ * Since: 3.6
  */
 void
 ev_annotation_get_rgba (EvAnnotation *annot,
                         GdkRGBA      *rgba)
 {
-    g_return_if_fail (EV_IS_ANNOTATION (annot));
-    g_return_if_fail (rgba != NULL);
+        g_return_if_fail (EV_IS_ANNOTATION (annot));
+        g_return_if_fail (rgba != NULL);
 
-    *rgba = annot->rgba;
+        *rgba = annot->rgba;
 }
 
 /**
@@ -608,28 +662,81 @@ ev_annotation_get_rgba (EvAnnotation *annot,
  *
  * Returns: %TRUE if the color has been changed, %FALSE otherwise
  *
- * Since: 1.2.1
+ * Since: 3.6
  */
 gboolean
 ev_annotation_set_rgba (EvAnnotation  *annot,
                         const GdkRGBA *rgba)
 {
-    g_return_val_if_fail (EV_IS_ANNOTATION (annot), FALSE);
-    g_return_val_if_fail (rgba != NULL, FALSE);
+        g_return_val_if_fail (EV_IS_ANNOTATION (annot), FALSE);
+        g_return_val_if_fail (rgba != NULL, FALSE);
 
-    if (gdk_rgba_equal (rgba, &annot->rgba))
-        return FALSE;
+        if (gdk_rgba_equal (rgba, &annot->rgba))
+                return FALSE;
 
-    annot->rgba = *rgba;
-    g_object_notify (G_OBJECT (annot), "rgba");
+        annot->rgba = *rgba;
+        g_object_notify (G_OBJECT (annot), "rgba");
+	g_object_notify (G_OBJECT (annot), "color");
 
-    return TRUE;
+        return TRUE;
+}
+
+/**
+ * ev_annotation_set_area:
+ * @annot: an #EvAnnotation
+ * @area: (out): a #EvRectangle to be filled with the annotation area
+ *
+ * Gets the area of @annot.
+ *
+ * Since: 3.18
+ */
+void
+ev_annotation_get_area (EvAnnotation *annot,
+                        EvRectangle  *area)
+{
+        g_return_if_fail (EV_IS_ANNOTATION (annot));
+        g_return_if_fail (area != NULL);
+
+        *area = annot->area;
+}
+
+/**
+ * ev_annotation_set_area:
+ * @annot: an #Evannotation
+ * @area: a #EvRectangle
+ *
+ * Set the area of the annotation to @area.
+ *
+ * Returns: %TRUE if the area has been changed, %FALSE otherwise
+ *
+ * Since: 3.18
+ */
+gboolean
+ev_annotation_set_area (EvAnnotation      *annot,
+                        const EvRectangle *area)
+{
+        gboolean was_initial;
+
+        g_return_val_if_fail (EV_IS_ANNOTATION (annot), FALSE);
+        g_return_val_if_fail (area != NULL, FALSE);
+
+        if (ev_rect_cmp ((EvRectangle *)area, &annot->area) == 0)
+                return FALSE;
+
+        was_initial = annot->area.x1 == -1 && annot->area.x2 == -1
+                && annot->area.y1 == -1 && annot->area.y2 == -1;
+        annot->area = *area;
+        if (!was_initial)
+                g_object_notify (G_OBJECT (annot), "area");
+
+        return TRUE;
 }
 
 /* EvAnnotationMarkup */
 typedef struct {
 	gchar   *label;
 	gdouble  opacity;
+	gboolean can_have_popup;
 	gboolean has_popup;
 	gboolean popup_is_open;
 	EvRectangle rectangle;
@@ -646,7 +753,8 @@ ev_annotation_markup_default_init (EvAnnotationMarkupInterface *iface)
 									  "Label",
 									  "Label of the markup annotation",
 									  NULL,
-									  G_PARAM_READWRITE));
+									  G_PARAM_READWRITE |
+                                                                          G_PARAM_STATIC_STRINGS));
 		g_object_interface_install_property (iface,
 						     g_param_spec_double ("opacity",
 									  "Opacity",
@@ -654,28 +762,40 @@ ev_annotation_markup_default_init (EvAnnotationMarkupInterface *iface)
 									  0,
 									  G_MAXDOUBLE,
 									  1.,
-									  G_PARAM_READWRITE));
+									  G_PARAM_READWRITE |
+                                                                          G_PARAM_STATIC_STRINGS));
 		g_object_interface_install_property (iface,
-						     g_param_spec_boolean ("has_popup",
+						     g_param_spec_boolean ("can-have-popup",
+									   "Can have popup",
+									   "Whether it is allowed to have a popup "
+									   "window for this type of markup annotation",
+									   FALSE,
+									   G_PARAM_READWRITE |
+                                                                           G_PARAM_STATIC_STRINGS));
+		g_object_interface_install_property (iface,
+						     g_param_spec_boolean ("has-popup",
 									   "Has popup",
 									   "Whether the markup annotation has "
 									   "a popup window associated",
 									   TRUE,
-									   G_PARAM_READWRITE));
+									   G_PARAM_READWRITE |
+                                                                           G_PARAM_STATIC_STRINGS));
 		g_object_interface_install_property (iface,
 						     g_param_spec_boxed ("rectangle",
 									 "Rectangle",
 									 "The Rectangle of the popup associated "
 									 "to the markup annotation",
 									 EV_TYPE_RECTANGLE,
-									 G_PARAM_READWRITE));
+									 G_PARAM_READWRITE |
+                                                                         G_PARAM_STATIC_STRINGS));
 		g_object_interface_install_property (iface,
-						     g_param_spec_boolean ("popup_is_open",
+						     g_param_spec_boolean ("popup-is-open",
 									   "PopupIsOpen",
 									   "Whether the popup associated to "
 									   "the markup annotation is open",
 									   FALSE,
-									   G_PARAM_READWRITE));
+									   G_PARAM_READWRITE |
+                                                                           G_PARAM_STATIC_STRINGS));
 		initialized = TRUE;
 	}
 }
@@ -722,6 +842,13 @@ ev_annotation_markup_set_property (GObject      *object,
 	case PROP_MARKUP_OPACITY:
 		ev_annotation_markup_set_opacity (markup, g_value_get_double (value));
 		break;
+	case PROP_MARKUP_CAN_HAVE_POPUP: {
+                EvAnnotationMarkupProps *props;
+
+                props = ev_annotation_markup_get_properties (markup);
+                props->can_have_popup = g_value_get_boolean (value);
+		break;
+        }
 	case PROP_MARKUP_HAS_POPUP:
 		ev_annotation_markup_set_has_popup (markup, g_value_get_boolean (value));
 		break;
@@ -753,6 +880,9 @@ ev_annotation_markup_get_property (GObject    *object,
 	case PROP_MARKUP_OPACITY:
 		g_value_set_double (value, props->opacity);
 		break;
+	case PROP_MARKUP_CAN_HAVE_POPUP:
+		g_value_set_boolean (value, props->can_have_popup);
+		break;
 	case PROP_MARKUP_HAS_POPUP:
 		g_value_set_boolean (value, props->has_popup);
 		break;
@@ -775,9 +905,10 @@ ev_annotation_markup_class_install_properties (GObjectClass *klass)
 
 	g_object_class_override_property (klass, PROP_MARKUP_LABEL, "label");
 	g_object_class_override_property (klass, PROP_MARKUP_OPACITY, "opacity");
-	g_object_class_override_property (klass, PROP_MARKUP_HAS_POPUP, "has_popup");
+	g_object_class_override_property (klass, PROP_MARKUP_CAN_HAVE_POPUP, "can-have-popup");
+	g_object_class_override_property (klass, PROP_MARKUP_HAS_POPUP, "has-popup");
 	g_object_class_override_property (klass, PROP_MARKUP_RECTANGLE, "rectangle");
-	g_object_class_override_property (klass, PROP_MARKUP_POPUP_IS_OPEN, "popup_is_open");
+	g_object_class_override_property (klass, PROP_MARKUP_POPUP_IS_OPEN, "popup-is-open");
 }
 
 const gchar *
@@ -841,6 +972,17 @@ ev_annotation_markup_set_opacity (EvAnnotationMarkup *markup,
 	g_object_notify (G_OBJECT (markup), "opacity");
 
 	return TRUE;
+}
+
+gboolean
+ev_annotation_markup_can_have_popup (EvAnnotationMarkup *markup)
+{
+	EvAnnotationMarkupProps *props;
+
+	g_return_val_if_fail (EV_IS_ANNOTATION_MARKUP (markup), FALSE);
+
+	props = ev_annotation_markup_get_properties (markup);
+	return props->can_have_popup;
 }
 
 gboolean
@@ -1013,14 +1155,16 @@ ev_annotation_text_class_init (EvAnnotationTextClass *klass)
 							    "The icon fo the text annotation",
 							    EV_TYPE_ANNOTATION_TEXT_ICON,
 							    EV_ANNOTATION_TEXT_ICON_NOTE,
-							    G_PARAM_READWRITE));
+							    G_PARAM_READWRITE |
+                                                            G_PARAM_STATIC_STRINGS));
 	g_object_class_install_property (g_object_class,
 					 PROP_TEXT_IS_OPEN,
-					 g_param_spec_boolean ("is_open",
+					 g_param_spec_boolean ("is-open",
 							       "IsOpen",
 							       "Whether text annot is initially open",
 							       FALSE,
-							       G_PARAM_READWRITE));
+							       G_PARAM_READWRITE |
+                                                               G_PARAM_STATIC_STRINGS));
 }
 
 static void
@@ -1166,7 +1310,8 @@ ev_annotation_attachment_class_init (EvAnnotationAttachmentClass *klass)
 							      "The attachment of the annotation",
 							      EV_TYPE_ATTACHMENT,
 							      G_PARAM_CONSTRUCT |
-							      G_PARAM_READWRITE));
+							      G_PARAM_READWRITE |
+                                                              G_PARAM_STATIC_STRINGS));
 }
 
 static void
@@ -1186,6 +1331,12 @@ ev_annotation_attachment_new (EvPage       *page,
 					    NULL));
 }
 
+/**
+ * ev_annotation_attachment_get_attachment:
+ * @annot: an #EvAnnotationAttachment
+ *
+ * Returns: (transfer none): an #EvAttachment
+ */
 EvAttachment *
 ev_annotation_attachment_get_attachment (EvAnnotationAttachment *annot)
 {
@@ -1210,4 +1361,145 @@ ev_annotation_attachment_set_attachment (EvAnnotationAttachment *annot,
 	g_object_notify (G_OBJECT (annot), "attachment");
 
 	return TRUE;
+}
+
+/* EvAnnotationTextMarkup */
+static void
+ev_annotation_text_markup_get_property (GObject    *object,
+                                        guint       prop_id,
+                                        GValue     *value,
+                                        GParamSpec *pspec)
+{
+	EvAnnotationTextMarkup *annot = EV_ANNOTATION_TEXT_MARKUP (object);
+
+	if (prop_id < PROP_TEXT_MARKUP_TYPE) {
+		ev_annotation_markup_get_property (object, prop_id, value, pspec);
+		return;
+	}
+
+	switch (prop_id) {
+	case PROP_TEXT_MARKUP_TYPE:
+		g_value_set_enum (value, annot->type);
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+	}
+}
+
+static void
+ev_annotation_text_markup_set_property (GObject      *object,
+                                        guint         prop_id,
+                                        const GValue *value,
+                                        GParamSpec   *pspec)
+{
+	EvAnnotationTextMarkup *annot = EV_ANNOTATION_TEXT_MARKUP (object);
+
+	if (prop_id < PROP_TEXT_MARKUP_TYPE) {
+		ev_annotation_markup_set_property (object, prop_id, value, pspec);
+		return;
+	}
+
+	switch (prop_id) {
+	case PROP_TEXT_MARKUP_TYPE:
+                annot->type = g_value_get_enum (value);
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+	}
+}
+
+static void
+ev_annotation_text_markup_init (EvAnnotationTextMarkup *annot)
+{
+        EV_ANNOTATION (annot)->type = EV_ANNOTATION_TYPE_TEXT_MARKUP;
+}
+
+static void
+ev_annotation_text_markup_class_init (EvAnnotationTextMarkupClass *class)
+{
+	GObjectClass *g_object_class = G_OBJECT_CLASS (class);
+
+	ev_annotation_markup_class_install_properties (g_object_class);
+
+        g_object_class->get_property = ev_annotation_text_markup_get_property;
+        g_object_class->set_property = ev_annotation_text_markup_set_property;
+
+        g_object_class_install_property (g_object_class,
+					 PROP_TEXT_MARKUP_TYPE,
+					 g_param_spec_enum ("type",
+							    "Type",
+							    "The text markup annotation type",
+							    EV_TYPE_ANNOTATION_TEXT_MARKUP_TYPE,
+							    EV_ANNOTATION_TEXT_MARKUP_HIGHLIGHT,
+							    G_PARAM_READWRITE |
+                                                            G_PARAM_CONSTRUCT |
+                                                            G_PARAM_STATIC_STRINGS));
+}
+
+static void
+ev_annotation_text_markup_markup_iface_init (EvAnnotationMarkupInterface *iface)
+{
+}
+
+EvAnnotation *
+ev_annotation_text_markup_highlight_new (EvPage *page)
+{
+        EvAnnotation *annot = EV_ANNOTATION (g_object_new (EV_TYPE_ANNOTATION_TEXT_MARKUP,
+                                                           "page", page,
+                                                           "type", EV_ANNOTATION_TEXT_MARKUP_HIGHLIGHT,
+                                                           NULL));
+        return annot;
+}
+
+EvAnnotation *
+ev_annotation_text_markup_strike_out_new (EvPage *page)
+{
+        EvAnnotation *annot = EV_ANNOTATION (g_object_new (EV_TYPE_ANNOTATION_TEXT_MARKUP,
+                                                           "page", page,
+                                                           "type", EV_ANNOTATION_TEXT_MARKUP_STRIKE_OUT,
+                                                           NULL));
+        return annot;
+}
+
+EvAnnotation *
+ev_annotation_text_markup_underline_new (EvPage *page)
+{
+        EvAnnotation *annot = EV_ANNOTATION (g_object_new (EV_TYPE_ANNOTATION_TEXT_MARKUP,
+                                                           "page", page,
+                                                           "type", EV_ANNOTATION_TEXT_MARKUP_UNDERLINE,
+                                                           NULL));
+        return annot;
+}
+
+EvAnnotation *
+ev_annotation_text_markup_squiggly_new (EvPage *page)
+{
+        EvAnnotation *annot = EV_ANNOTATION (g_object_new (EV_TYPE_ANNOTATION_TEXT_MARKUP,
+                                                           "page", page,
+                                                           "type", EV_ANNOTATION_TEXT_MARKUP_SQUIGGLY,
+                                                           NULL));
+        return annot;
+}
+
+EvAnnotationTextMarkupType
+ev_annotation_text_markup_get_markup_type (EvAnnotationTextMarkup *annot)
+{
+        g_return_val_if_fail (EV_IS_ANNOTATION_TEXT_MARKUP (annot), EV_ANNOTATION_TEXT_MARKUP_HIGHLIGHT);
+
+        return annot->type;
+}
+
+gboolean
+ev_annotation_text_markup_set_markup_type (EvAnnotationTextMarkup    *annot,
+                                           EvAnnotationTextMarkupType markup_type)
+{
+        g_return_val_if_fail (EV_IS_ANNOTATION_TEXT_MARKUP (annot), FALSE);
+
+        if (annot->type == markup_type)
+                return FALSE;
+
+        annot->type = markup_type;
+        g_object_notify (G_OBJECT (annot), "type");
+
+        return TRUE;
 }

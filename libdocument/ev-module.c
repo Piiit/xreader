@@ -1,6 +1,6 @@
 /*
  * ev-module.c
- * This file is part of Xreader
+ * This file is part of Evince
  *
  * Copyright (C) 2005 - Paolo Maggi 
  *
@@ -36,7 +36,7 @@
  * $Id: gedit-module.c 5367 2006-12-17 14:29:49Z pborelli $
  */
 
-/* Modified by xreader team */
+/* Modified by evince team */
 
 #include "config.h"
 
@@ -65,6 +65,7 @@ typedef GType (*EvModuleRegisterFunc) (GTypeModule *);
 static void ev_module_init       (EvModule *action);
 static void ev_module_class_init (EvModuleClass *class);
 
+#define ev_module_get_type _ev_module_get_type
 G_DEFINE_TYPE (EvModule, ev_module, G_TYPE_TYPE_MODULE)
 
 static gboolean
@@ -82,7 +83,7 @@ ev_module_load (GTypeModule *gmodule)
         }
 
         /* extract symbols from the lib */
-        if (!g_module_symbol (module->library, "register_xreader_backend",
+        if (!g_module_symbol (module->library, "register_evince_backend",
                               (void *) &register_func)) {
                 g_warning ("%s", g_module_error ());
                 g_module_close (module->library);
@@ -93,7 +94,7 @@ ev_module_load (GTypeModule *gmodule)
         /* symbol can still be NULL even though g_module_symbol
          * returned TRUE */
         if (!register_func) {
-                g_warning ("Symbol 'register_xreader_backend' should not be NULL");
+                g_warning ("Symbol 'register_evince_backend' should not be NULL");
                 g_module_close (module->library);
 
                 return FALSE;
@@ -102,7 +103,7 @@ ev_module_load (GTypeModule *gmodule)
         module->type = register_func (gmodule);
 
         if (module->type == 0) {
-                g_warning ("Invalid xreader backend contained by module %s", module->path);
+                g_warning ("Invalid evince backend contained by module %s", module->path);
 		
                 return FALSE;
         }
@@ -119,13 +120,11 @@ ev_module_unload (GTypeModule *gmodule)
         EvModule *module = EV_MODULE (gmodule);
 
         g_module_close (module->library);
-
         module->library = NULL;
-        module->type = 0;
 }
 
 const gchar *
-ev_module_get_path (EvModule *module)
+_ev_module_get_path (EvModule *module)
 {
         g_return_val_if_fail (EV_IS_MODULE (module), NULL);
 
@@ -133,7 +132,7 @@ ev_module_get_path (EvModule *module)
 }
 
 GObject *
-ev_module_new_object (EvModule *module)
+_ev_module_new_object (EvModule *module)
 {
 	g_return_val_if_fail (EV_IS_MODULE (module), NULL);
 	
@@ -144,7 +143,7 @@ ev_module_new_object (EvModule *module)
 }
 
 GType
-ev_module_get_object_type (EvModule *module)
+_ev_module_get_object_type (EvModule *module)
 {
 	g_return_val_if_fail (EV_IS_MODULE (module), 0);
 
@@ -179,8 +178,8 @@ ev_module_class_init (EvModuleClass *class)
 }
 
 EvModule *
-ev_module_new (const gchar *path,
-	       gboolean     resident)
+_ev_module_new (const gchar *path,
+                gboolean     resident)
 {
         EvModule *result;
 

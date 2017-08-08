@@ -1,15 +1,15 @@
 /* ev-document-annotations.c
- *  this file is part of xreader, a mate document viewer
+ *  this file is part of evince, a gnome document viewer
  *
  * Copyright (C) 2009 Carlos Garcia Campos <carlosgc@gnome.org>
  * Copyright (C) 2007 Iñigo Martinez <inigomartinez@gmail.com>
  *
- * Xreader is free software; you can redistribute it and/or modify it
+ * Evince is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Xreader is distributed in the hope that it will be useful, but
+ * Evince is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -72,4 +72,22 @@ ev_document_annotations_can_add_annotation (EvDocumentAnnotations *document_anno
 	EvDocumentAnnotationsInterface *iface = EV_DOCUMENT_ANNOTATIONS_GET_IFACE (document_annots);
 
 	return iface->add_annotation != NULL;
+}
+
+void
+ev_document_annotations_remove_annotation (EvDocumentAnnotations *document_annots,
+					   EvAnnotation          *annot)
+{
+	EvDocumentAnnotationsInterface *iface = EV_DOCUMENT_ANNOTATIONS_GET_IFACE (document_annots);
+
+	if (iface->remove_annotation)
+		iface->remove_annotation (document_annots, annot);
+}
+
+gboolean
+ev_document_annotations_can_remove_annotation (EvDocumentAnnotations *document_annots)
+{
+        EvDocumentAnnotationsInterface *iface = EV_DOCUMENT_ANNOTATIONS_GET_IFACE (document_annots);
+
+	return iface->remove_annotation != NULL;
 }

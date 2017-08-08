@@ -1,14 +1,14 @@
 /* ev-document-transition.c
- *  this file is part of xreader, a mate document viewer
+ *  this file is part of evince, a gnome document viewer
  * 
  * Copyright (C) 2006 Carlos Garcia Campos <carlosgc@gnome.org>
  *
- * Xreader is free software; you can redistribute it and/or modify it
+ * Evince is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Xreader is distributed in the hope that it will be useful, but
+ * Evince is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -40,6 +40,13 @@ ev_document_transition_get_page_duration (EvDocumentTransition *document_trans,
 	return -1;
 }
 
+/**
+ * ev_document_transition_get_effect:
+ * @document_trans: an #EvDocumentTransition
+ * @page: a page index
+ *
+ * Returns: (transfer full): an #EvTransitionEffect
+ */
 EvTransitionEffect *
 ev_document_transition_get_effect (EvDocumentTransition *document_trans,
 				   gint                  page)

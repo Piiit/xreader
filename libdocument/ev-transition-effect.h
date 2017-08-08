@@ -1,14 +1,14 @@
 /* ev-transition-effect.h
- *  this file is part of xreader, a mate document viewer
+ *  this file is part of evince, a gnome document viewer
  *
  * Copyright (C) 2007 Carlos Garnacho <carlos@imendio.com>
  *
- * Xreader is free software; you can redistribute it and/or modify it
+ * Evince is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Xreader is distributed in the hope that it will be useful, but
+ * Evince is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#if !defined (__EV_XREADER_DOCUMENT_H_INSIDE__) && !defined (XREADER_COMPILATION)
-#error "Only <xreader-document.h> can be included directly."
+#if !defined (__EV_EVINCE_DOCUMENT_H_INSIDE__) && !defined (EVINCE_COMPILATION)
+#error "Only <evince-document.h> can be included directly."
 #endif
 
 #ifndef __EV_TRANSITION_EFFECT_H__
@@ -62,19 +62,18 @@ typedef enum {
 } EvTransitionEffectDirection;
 
 
-typedef struct EvTransitionEffect      EvTransitionEffect;
-typedef struct EvTransitionEffectClass EvTransitionEffectClass;
+typedef struct _EvTransitionEffect      EvTransitionEffect;
+typedef struct _EvTransitionEffectClass EvTransitionEffectClass;
 
-struct EvTransitionEffect
+struct _EvTransitionEffect
 {
 	GObject parent_instance;
 };
 
-struct EvTransitionEffectClass
+struct _EvTransitionEffectClass
 {
 	GObjectClass parent_class;
 };
-
 
 GType                 ev_transition_effect_get_type           (void) G_GNUC_CONST;
 

@@ -1,7 +1,8 @@
-lib_LTLIBRARIES = libxreaderdocument.la
+lib_LTLIBRARIES = libevdocument3.la
 
 NOINST_H_FILES =				\
 	ev-debug.h				\
+	ev-backend-info.h			\
 	ev-module.h
 
 INST_H_SRC_FILES = 				\
@@ -20,10 +21,10 @@ INST_H_SRC_FILES = 				\
 	ev-document-info.h			\
 	ev-document-layers.h			\
 	ev-document-links.h			\
+	ev-document-media.h			\
 	ev-document-misc.h			\
 	ev-document-print.h			\
 	ev-document-security.h			\
-	ev-document-thumbnails.h		\
 	ev-document-transition.h		\
 	ev-document-text.h			\
 	ev-file-exporter.h			\
@@ -37,24 +38,25 @@ INST_H_SRC_FILES = 				\
 	ev-link.h				\
 	ev-macros.h				\
 	ev-mapping-list.h			\
+	ev-media.h				\
 	ev-page.h				\
 	ev-render-context.h			\
 	ev-selection.h				\
-	ev-transition-effect.h			\
+	ev-transition-effect.h
+
+INST_H_BUILT_FILES = \
+	ev-document-type-builtins.h \
 	ev-version.h
 
-INST_H_FILES = 					\
-	$(INST_H_SRC_FILES)			\
-	ev-document-type-builtins.h
+headerdir = $(includedir)/evince/$(EV_API_VERSION)/libdocument
+header_DATA = $(INST_H_SRC_FILES)
+nodist_header_DATA = $(INST_H_BUILT_FILES)
 
-headerdir = $(includedir)/xreader/$(EV_API_VERSION)/libdocument
-header_DATA = $(INST_H_FILES)
-
-libxreaderdocument_la_SOURCES=			\
+libevdocument3_la_SOURCES=			\
 	ev-annotation.c				\
 	ev-async-renderer.c			\
 	ev-attachment.c				\
-	ev-backends-manager.c			\
+	ev-backend-info.c			\
 	ev-layer.c				\
 	ev-link.c				\
 	ev-link-action.c			\
@@ -65,23 +67,23 @@ libxreaderdocument_la_SOURCES=			\
 	ev-document-annotations.c		\
 	ev-document-attachments.c		\
 	ev-document-factory.c			\
-	ev-document-thumbnails.c		\
 	ev-document-fonts.c                     \
 	ev-document-layers.c			\
 	ev-document-links.c			\
+	ev-document-media.c			\
 	ev-document-images.c			\
 	ev-document-print.c			\
 	ev-document-security.c			\
 	ev-document-find.c			\
 	ev-document-transition.c		\
 	ev-document-forms.c			\
-	ev-document-type-builtins.c		\
 	ev-document-text.c			\
 	ev-form-field.c 			\
 	ev-debug.c				\
 	ev-file-exporter.c			\
 	ev-file-helpers.c			\
 	ev-mapping-list.c			\
+	ev-media.c				\
 	ev-module.c				\
 	ev-page.c				\
 	ev-render-context.c			\
@@ -89,36 +91,36 @@ libxreaderdocument_la_SOURCES=			\
 	ev-transition-effect.c			\
 	ev-document-misc.c			\
 	$(NOINST_H_FILES)			\
-	$(INST_H_FILES)
+	$(INST_H_SRC_FILES)
 
-libxreaderdocument_la_CPPFLAGS = \
-	-DG_LOG_DOMAIN=\"XreaderDocument\"		\
-	-DXREADER_UIDIR=\"$(pkgdatadir)\"		\
-	-DXREADER_LOCALE_DIR=\"$(datadir)/locale\"		\
+nodist_libevdocument3_la_SOURCES = \
+	ev-document-type-builtins.c \
+	$(INST_H_BUILT_FILES)
+
+libevdocument3_la_CPPFLAGS = \
+	-DG_LOG_DOMAIN=\"EvinceDocument\"		\
+	-DGNOMELOCALEDIR=\"$(datadir)/locale\"		\
 	-DEV_BACKENDSDIR=\"$(backenddir)\"		\
 	-DEV_BACKENDSBINARYVERSION=\"$(backend_binary_version)\"	\
-	-DXREADER_COMPILATION				\
+	-DEVINCE_COMPILATION				\
 	$(AM_CPPFLAGS)
 
-libxreaderdocument_la_CFLAGS = \
+libevdocument3_la_CFLAGS = \
 	$(LIBDOCUMENT_CFLAGS)			\
 	-I$(top_srcdir)/cut-n-paste/synctex	\
-	$(WARN_CFLAGS)				\
-	$(DISABLE_DEPRECATED)			\
 	$(AM_CFLAGS)
 
-libxreaderdocument_la_LDFLAGS = \
+libevdocument3_la_LDFLAGS = \
 	-version-info $(EV_DOCUMENT_LT_VERSION_INFO)	\
 	-no-undefined	\
 	-export-symbols-regex "^ev_*"	\
 	$(AM_LDFLAGS)
 
-libxreaderdocument_la_LIBADD = \
-	$(LIBDOCUMENT_LIBS)	\
-	$(GMODULE_LIBS)		\
+libevdocument3_la_LIBADD = \
 	$(top_builddir)/cut-n-paste/synctex/libsynctex.la \
-	$(ZLIB_LIBS)
-
+	$(LIBDOCUMENT_LIBS)	\
+	$(ZLIB_LIBS)		\
+	$(LIBM)
 
 BUILT_SOURCES = 			\
 	ev-document-type-builtins.c	\
@@ -151,45 +153,32 @@ EXTRA_DIST = \
 
 # GObject Introspection
 
-if ENABLE_INTROSPECTION
+if HAVE_INTROSPECTION
 
-XreaderDocument-$(EV_API_VERSION).gir: libxreaderdocument.la Makefile $(INST_H_FILES) $(filter %.c,$(libxreaderdocument_la_SOURCES))
-	$(AM_V_GEN) PKG_CONFIG_PATH=$(top_builddir):$$PKG_CONFIG_PATH \
-	$(G_IR_SCANNER) -v --namespace XreaderDocument \
-	--strip-prefix=Ev \
-	--nsversion=$(EV_API_VERSION) \
-	--include=GLib-2.0 \
-	--include=Gio-2.0 \
-	--include=Gdk-3.0 \
-	--include=GdkPixbuf-2.0 \
-	--include=Gtk-3.0 \
-	--library=xreaderdocument \
-	--libtool="$(LIBTOOL)" \
-	--output $@ \
-	--pkg xreader-document-$(EV_API_VERSION) \
-	-I$(top_srcdir) \
-	-I$(top_builddir) \
-	-I$(srcdir) \
-	-I$(builddir) \
-	-DXREADER_COMPILATION \
-	$(filter %.h,$^) \
-	$(filter %.c,$^)
+include $(INTROSPECTION_MAKEFILE)
+EvinceDocument-$(EV_API_VERSION).gir: libevdocument3.la
+EvinceDocument_@EV_API_VERSION_U@_gir_FILES = $(INST_H_SRC_FILES) $(INST_H_BUILT_FILES) $(filter %.c,$(libevdocument3_la_SOURCES))
+EvinceDocument_@EV_API_VERSION_U@_gir_LIBS = libevdocument3.la
+EvinceDocument_@EV_API_VERSION_U@_gir_SCANNERFLAGS = \
+	--identifier-prefix=Ev	\
+	--symbol-prefix=ev
+EvinceDocument_@EV_API_VERSION_U@_gir_INCLUDES = GLib-2.0 Gio-2.0 Gdk-3.0 GdkPixbuf-2.0 Gtk-3.0
+EvinceDocument_@EV_API_VERSION_U@_gir_CFLAGS = \
+	-DEVINCE_COMPILATION	\
+	-I$(top_srcdir)		\
+	-I$(top_builddir)	\
+	-I$(srcdir)		\
+	-I$(builddir)
+EvinceDocument_@EV_API_VERSION_U@_gir_EXPORT_PACKAGES = evince-document-$(EV_API_VERSION)
+INTROSPECTION_GIRS = EvinceDocument-$(EV_API_VERSION).gir
 
-girdir = $(GIRDIR)
-gir_DATA = XreaderDocument-$(EV_API_VERSION).gir
+girdir = $(datadir)/gir-1.0
+gir_DATA = EvinceDocument-$(EV_API_VERSION).gir
 
-typelibsdir = $(GIRTYPELIBDIR)
-typelibs_DATA = XreaderDocument-$(EV_API_VERSION).typelib
+typelibsdir = $(libdir)/girepository-1.0
+typelibs_DATA = EvinceDocument-$(EV_API_VERSION).typelib
 
-EXTRA_DIST += $(gir_DATA)
 CLEANFILES += $(gir_DATA) $(typelibs_DATA)
-
-%.typelib: %.gir
-	$(AM_V_GEN) LD_LIBRARY_PATH=$${LD_LIBRARY_PATH:+$$LD_LIBRARY_PATH:}. $(G_IR_COMPILER) \
-	--includedir=$(srcdir) \
-	--includedir=. \
-	$(G_IR_COMPILER_OPTS) \
-	$< -o $@
 
 endif # ENABLE_INTROSPECTION
 

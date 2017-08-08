@@ -20,8 +20,8 @@
  *  $Id$
  */
 
-#if !defined (__EV_XREADER_DOCUMENT_H_INSIDE__) && !defined (XREADER_COMPILATION)
-#error "Only <xreader-document.h> can be included directly."
+#if !defined (__EV_EVINCE_DOCUMENT_H_INSIDE__) && !defined (EVINCE_COMPILATION)
+#error "Only <evince-document.h> can be included directly."
 #endif
 
 #ifndef EV_DOCUMENT_H
@@ -29,7 +29,8 @@
 
 #include <glib-object.h>
 #include <glib.h>
-#include <gmodule.h>
+#include <gio/gio.h>
+#include <gdk/gdk.h>
 #include <cairo.h>
 
 #include "ev-document-info.h"
@@ -53,21 +54,26 @@ typedef struct _EvDocumentPrivate EvDocumentPrivate;
 #define EV_DOC_MUTEX_LOCK (ev_document_doc_mutex_lock ())
 #define EV_DOC_MUTEX_UNLOCK (ev_document_doc_mutex_unlock ())
 
+typedef enum /*< flags >*/ {
+        EV_DOCUMENT_LOAD_FLAG_NONE = 0
+} EvDocumentLoadFlags;
+
 typedef enum
 {
         EV_DOCUMENT_ERROR_INVALID,
         EV_DOCUMENT_ERROR_ENCRYPTED
 } EvDocumentError;
 
-typedef struct {
-        double x;
-        double y;
-} EvPoint;
-
+typedef struct _EvPoint EvPoint;
 typedef struct _EvRectangle EvRectangle;
 typedef struct _EvMapping EvMapping;
 typedef struct _EvSourceLink EvSourceLink;
 typedef struct _EvDocumentBackendInfo EvDocumentBackendInfo;
+
+struct _EvPoint {
+        double x;
+        double y;
+};
 
 struct _EvDocumentBackendInfo
 {
@@ -80,11 +86,6 @@ struct _EvDocument
 	GObject base;
 
 	EvDocumentPrivate *priv;
-	/*
-	 * Since we can only access the members of this structure from the window frontend,
-	 * we need a flag to detemine whether to replace the xreader-view with a web-view.
-	 */
-	gboolean	iswebdocument;
 };
 
 struct _EvDocumentClass
@@ -92,30 +93,43 @@ struct _EvDocumentClass
         GObjectClass base_class;
 
         /* Virtual Methods  */
-        gboolean          (* load)            (EvDocument      *document,
-                                               const char      *uri,
-                                               GError         **error);
-        gboolean          (* save)            (EvDocument      *document,
-                                               const char      *uri,
-                                               GError         **error);
-        gint              (* get_n_pages)     (EvDocument      *document);
-	EvPage          * (* get_page)        (EvDocument      *document,
-					       gint             index);
-        void              (* get_page_size)   (EvDocument      *document,
-                                               EvPage          *page,
-                                               double          *width,
-                                               double          *height);
-        gchar           * (* get_page_label)  (EvDocument      *document,
-                                               EvPage          *page);
-        cairo_surface_t * (* render)          (EvDocument      *document,
-                                               EvRenderContext *rc);
-        EvDocumentInfo  * (* get_info)        (EvDocument      *document);
-        gboolean          (* get_backend_info)(EvDocument      *document,
-                                               EvDocumentBackendInfo *info);
-        gboolean	  (* support_synctex) (EvDocument      *document);
+        gboolean          (* load)                  (EvDocument          *document,
+						     const char          *uri,
+						     GError             **error);
+        gboolean          (* save)                  (EvDocument          *document,
+						     const char          *uri,
+						     GError             **error);
+        gint              (* get_n_pages)           (EvDocument          *document);
+	EvPage          * (* get_page)              (EvDocument          *document,
+						     gint                 index);
+        void              (* get_page_size)         (EvDocument          *document,
+						     EvPage              *page,
+						     double              *width,
+						     double              *height);
+        gchar           * (* get_page_label)        (EvDocument          *document,
+						     EvPage              *page);
+        cairo_surface_t * (* render)                (EvDocument          *document,
+						     EvRenderContext     *rc);
+	GdkPixbuf       * (* get_thumbnail)         (EvDocument          *document,
+						     EvRenderContext     *rc);
+        EvDocumentInfo  * (* get_info)              (EvDocument          *document);
+        gboolean          (* get_backend_info)      (EvDocument          *document,
+						     EvDocumentBackendInfo *info);
+        gboolean	  (* support_synctex)       (EvDocument          *document);
 
-	void              (* toggle_night_mode)  (EvDocument      *document,gboolean night);
-	void              (*check_add_night_sheet)(EvDocument      *document);	
+        /* GIO streams */
+        gboolean          (* load_stream)           (EvDocument          *document,
+						     GInputStream        *stream,
+						     EvDocumentLoadFlags  flags,
+						     GCancellable        *cancellable,
+						     GError             **error);
+        gboolean          (* load_gfile)            (EvDocument          *document,
+						     GFile               *file,
+						     EvDocumentLoadFlags  flags,
+						     GCancellable        *cancellable,
+						     GError             **error);
+	cairo_surface_t * (* get_thumbnail_surface) (EvDocument          *document,
+						     EvRenderContext     *rc);
 };
 
 GType            ev_document_get_type             (void) G_GNUC_CONST;
@@ -139,6 +153,16 @@ gboolean         ev_document_get_backend_info     (EvDocument      *document,
 gboolean         ev_document_load                 (EvDocument      *document,
 						   const char      *uri,
 						   GError         **error);
+gboolean         ev_document_load_stream          (EvDocument         *document,
+                                                   GInputStream       *stream,
+                                                   EvDocumentLoadFlags flags,
+                                                   GCancellable       *cancellable,
+                                                   GError            **error);
+gboolean         ev_document_load_gfile           (EvDocument         *document,
+                                                   GFile              *file,
+                                                   EvDocumentLoadFlags flags,
+                                                   GCancellable       *cancellable,
+                                                   GError            **error);
 gboolean         ev_document_save                 (EvDocument      *document,
 						   const char      *uri,
 						   GError         **error);
@@ -153,6 +177,11 @@ gchar           *ev_document_get_page_label       (EvDocument      *document,
 						   gint             page_index);
 cairo_surface_t *ev_document_render               (EvDocument      *document,
 						   EvRenderContext *rc);
+GdkPixbuf       *ev_document_get_thumbnail        (EvDocument      *document,
+						   EvRenderContext *rc);
+cairo_surface_t *ev_document_get_thumbnail_surface (EvDocument      *document,
+						    EvRenderContext *rc);
+guint64          ev_document_get_size             (EvDocument      *document);
 const gchar     *ev_document_get_uri              (EvDocument      *document);
 const gchar     *ev_document_get_title            (EvDocument      *document);
 gboolean         ev_document_is_page_size_uniform (EvDocument      *document);
@@ -182,8 +211,6 @@ EvMapping       *ev_document_synctex_forward_search
 
 gint             ev_rect_cmp                      (EvRectangle     *a,
 					           EvRectangle     *b);
-void            ev_document_toggle_night_mode     (EvDocument *document,gboolean night);
-void			ev_document_check_add_night_sheet (EvDocument *document);
 
 #define EV_TYPE_RECTANGLE (ev_rectangle_get_type ())
 struct _EvRectangle
@@ -262,7 +289,7 @@ static void     backend_name##_class_intern_init (gpointer klass)		\
 }										\
 										\
 G_MODULE_EXPORT GType								\
-register_xreader_backend (GTypeModule *module)					\
+register_evince_backend (GTypeModule *module)					\
 {										\
 	const GTypeInfo our_info = {  				                \
 		sizeof (BackendName##Class),					\
@@ -277,7 +304,7 @@ register_xreader_backend (GTypeModule *module)					\
 	};									\
 										\
 	/* Initialise the i18n stuff */						\
-	bindtextdomain (GETTEXT_PACKAGE, XREADER_LOCALE_DIR);			\
+	bindtextdomain (GETTEXT_PACKAGE, GNOMELOCALEDIR);			\
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");			\
                                                                                 \
 	g_define_type_id = g_type_module_register_type (module,		        \

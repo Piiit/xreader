@@ -1,6 +1,6 @@
 /*
  * ev-debug.h
- * This file is part of Xreader
+ * This file is part of Evince
  *
  * Copyright (C) 1998, 1999 Alex Roberts, Evan Lawrence
  * Copyright (C) 2000, 2001 Chema Celorio, Paolo Maggi
@@ -30,9 +30,9 @@
  * $Id: gedit-debug.h 4809 2006-04-08 14:46:31Z pborelli $
  */
 
-/* Modified by Xreader Team */
+/* Modified by Evince Team */
 
-#if !defined (XREADER_COMPILATION)
+#if !defined (EVINCE_COMPILATION)
 #error "This is a private header."
 #endif
 
@@ -71,9 +71,22 @@ G_BEGIN_DECLS
  * sections.
  */
 typedef enum {
-	EV_NO_DEBUG          = 0,
-	EV_DEBUG_JOBS        = 1 << 0
+	EV_NO_DEBUG           = 0,
+	EV_DEBUG_JOBS         = 1 << 0,
+        EV_DEBUG_SHOW_BORDERS = 1 << 1
 } EvDebugSection;
+
+typedef enum {
+        EV_DEBUG_BORDER_NONE       = 0,
+        EV_DEBUG_BORDER_CHARS      = 1 << 0,
+        EV_DEBUG_BORDER_LINKS      = 1 << 1,
+        EV_DEBUG_BORDER_FORMS      = 1 << 2,
+        EV_DEBUG_BORDER_ANNOTS     = 1 << 3,
+        EV_DEBUG_BORDER_IMAGES     = 1 << 4,
+        EV_DEBUG_BORDER_MEDIA      = 1 << 5,
+        EV_DEBUG_BORDER_SELECTIONS = 1 << 6,
+        EV_DEBUG_BORDER_ALL        = (1 << 7) - 1
+} EvDebugBorders;
 
 #define DEBUG_JOBS      EV_DEBUG_JOBS,    __FILE__, __LINE__, G_STRFUNC
 
@@ -99,6 +112,8 @@ void ev_profiler_start (EvProfileSection section,
 			const gchar     *format, ...) G_GNUC_PRINTF(2, 3);
 void ev_profiler_stop  (EvProfileSection section,
 			const gchar     *format, ...) G_GNUC_PRINTF(2, 3);
+
+EvDebugBorders ev_debug_get_debug_borders (void);
 
 G_END_DECLS
 
