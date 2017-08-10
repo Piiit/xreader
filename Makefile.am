@@ -3,7 +3,6 @@ ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 SUBDIRS =       \
     cut-n-paste \
     data        \
-    libdocument \
     backend     \
     libview     \
     libmisc

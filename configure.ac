@@ -109,10 +109,10 @@ dnl Check dependencies
 
 AC_SEARCH_LIBS([hypot],[m])
 
-PKG_CHECK_MODULES(LIBDOCUMENT, gtk+-3.0 >= $GTK_REQUIRED gio-2.0 >= $GLIB_REQUIRED)
+# PKG_CHECK_MODULES(LIBDOCUMENT, gtk+-3.0 >= $GTK_REQUIRED gio-2.0 >= $GLIB_REQUIRED)
 PKG_CHECK_MODULES(LIBVIEW, gtk+-3.0 >= $GTK_REQUIRED gail$GAIL_API_VERSION >= $GTK_REQUIRED gthread-2.0 gio-2.0 >= $GLIB_REQUIRED)
-PKG_CHECK_MODULES(BACKEND, cairo >= $CAIRO_REQUIRED gtk+-3.0 >= $GTK_REQUIRED libevince-dev >= $LIBEVINCE_REQUIRED)
-PKG_CHECK_MODULES(FRONTEND_CORE, gtk+-3.0 >= $GTK_REQUIRED gthread-2.0 gio-2.0 >= $GLIB_REQUIRED libevince >= $LIBEVINCE_REQUIRED)
+PKG_CHECK_MODULES(BACKEND, cairo >= $CAIRO_REQUIRED gtk+-3.0 >= $GTK_REQUIRED EvinceDocument-3.0 >= $LIBEVINCE_REQUIRED)
+PKG_CHECK_MODULES(FRONTEND_CORE, gtk+-3.0 >= $GTK_REQUIRED gthread-2.0 gio-2.0 >= $GLIB_REQUIRED)
 PKG_CHECK_MODULES(GMODULE, gmodule-2.0 >= $GLIB_REQUIRED)
 
 PKG_CHECK_MODULES([SHELL_CORE],[libxml-2.0 >= $LIBXML_REQUIRED gtk+-3.0 >= $GTK_REQUIRED gio-2.0 >= $GLIB_REQUIRED gthread-2.0 x11 libevince >= $LIBEVINCE_REQUIRED])
@@ -214,10 +214,10 @@ AC_ARG_ENABLE([tests],
 
 AM_CONDITIONAL(ENABLE_TESTS, test x$enable_tests = xyes)
 
-LIBDOCUMENT_CFLAGS="$LIBDOCUMENT_CFLAGS $DEBUG_FLAGS"
-LIBDOCUMENT_LIBS="$LIBDOCUMENT_LIBS"
-AC_SUBST(LIBDOCUMENT_CFLAGS)
-AC_SUBST(LIBDOCUMENT_LIBS)
+# LIBDOCUMENT_CFLAGS="$LIBDOCUMENT_CFLAGS $DEBUG_FLAGS"
+# LIBDOCUMENT_LIBS="$LIBDOCUMENT_LIBS"
+# AC_SUBST(LIBDOCUMENT_CFLAGS)
+# AC_SUBST(LIBDOCUMENT_LIBS)
 
 LIBVIEW_CFLAGS="$LIBVIEW_CFLAGS $GTKUNIXPRINT_CFLAGS $DEBUG_FLAGS"
 LIBVIEW_LIBS="$LIBVIEW_LIBS $GTKUNIXPRINT_LIBS -lm"
@@ -724,8 +724,6 @@ help/reference/libview/Makefile
 help/reference/libview/version.xml
 help/reference/shell/Makefile
 help/reference/shell/version.xml
-libdocument/Makefile
-libdocument/ev-version.h
 libmisc/Makefile
 libview/Makefile
 Makefile
@@ -740,7 +738,7 @@ test/Makefile
 thumbnailer/Makefile
 ])
 
-AC_CONFIG_FILES(xreader-document-[]ev_api_version[].pc:xreader-document.pc.in)
+#AC_CONFIG_FILES(xreader-document-[]ev_api_version[].pc:xreader-document.pc.in)
 AC_CONFIG_FILES(xreader-view-[]ev_api_version[].pc:xreader-view.pc.in)
 
 AC_OUTPUT
