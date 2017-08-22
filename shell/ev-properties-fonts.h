@@ -21,7 +21,7 @@
 #ifndef __EV_PROPERTIES_FONTS_H__
 #define __EV_PROPERTIES_FONTS_H__
 
-#include "ev-document.h"
+#include <evince-document.h>
 
 #include <gtk/gtk.h>
 

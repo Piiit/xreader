@@ -24,7 +24,7 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 
-#include <xreader-document.h>
+#include <evince-document.h>
 #include "ev-page-action.h"
 #include "ev-page-action-widget.h"
 

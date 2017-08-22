@@ -22,8 +22,8 @@
 
 #include <glib-object.h>
 
-#include <xreader-document.h>
-#include <xreader-view.h>
+#include <evince-document.h>
+#include <evince-view.h>
 
 G_BEGIN_DECLS
 

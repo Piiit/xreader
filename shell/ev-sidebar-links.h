@@ -26,8 +26,6 @@
 
 #include <gtk/gtk.h>
 
-#include "ev-document.h"
-#include "ev-link.h"
 #include "ev-utils.h"
 
 G_BEGIN_DECLS

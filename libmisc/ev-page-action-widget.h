@@ -18,7 +18,7 @@
  *
  */
 
-#include <xreader-view.h>
+#include <evince-view.h>
  
 #include <gtk/gtk.h>
 

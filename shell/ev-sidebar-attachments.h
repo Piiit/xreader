@@ -24,8 +24,6 @@
 #ifndef __EV_SIDEBAR_ATTACHMENTS_H__
 #define __EV_SIDEBAR_ATTACHMENTS_H__
 
-#include "ev-attachment.h"
-#include "ev-document.h"
 
 G_BEGIN_DECLS
 

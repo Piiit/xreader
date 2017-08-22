@@ -40,6 +40,7 @@
 #include <glib/gi18n.h>
 #include <gio/gio.h>
 #include <gtk/gtk.h>
+#include <evince-document.h>
 
 #include "eggfindbar.h"
 
@@ -47,22 +48,8 @@
 #include "ephy-zoom.h"
 
 #include "ev-application.h"
-#include "ev-document-factory.h"
-#include "ev-document-find.h"
-#include "ev-document-fonts.h"
-#include "ev-document-images.h"
-#include "ev-document-links.h"
-#include "ev-document-thumbnails.h"
-#include "ev-document-annotations.h"
-#include "ev-document-type-builtins.h"
-#include "ev-document-misc.h"
-#include "ev-file-exporter.h"
-#include "ev-file-helpers.h"
 #include "ev-file-monitor.h"
 #include "ev-history.h"
-#include "ev-image.h"
-#include "ev-job-scheduler.h"
-#include "ev-jobs.h"
 #include "ev-message-area.h"
 #include "ev-metadata.h"
 #include "ev-open-recent-action.h"
@@ -78,16 +65,10 @@
 #include "ev-sidebar-page.h"
 #include "ev-sidebar-thumbnails.h"
 #include "ev-sidebar-layers.h"
-#include "ev-stock-icons.h"
 #include "ev-utils.h"
 #include "ev-keyring.h"
-#include "ev-view.h"
-#include "ev-web-view.h"
-#include "ev-view-presentation.h"
-#include "ev-view-type-builtins.h"
 #include "ev-window.h"
 #include "ev-window-title.h"
-#include "ev-print-operation.h"
 #include "ev-progress-message-area.h"
 #include "ev-annotation-properties-dialog.h"
 #include "ev-bookmarks.h"

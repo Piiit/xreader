@@ -25,8 +25,7 @@
 #define __EV_SIDEBAR_H__
 
 #include <gtk/gtk.h>
-
-#include "ev-document-model.h"
+#include <evince-document.h>
 
 G_BEGIN_DECLS
 

@@ -24,7 +24,7 @@
 
 #include <gtk/gtk.h>
 
-#include <xreader-document.h>
+#include <evince-document.h>
 
 G_BEGIN_DECLS
 

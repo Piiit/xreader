@@ -21,7 +21,7 @@
 #ifndef __EV_PROPERTIES_DIALOG_H__
 #define __EV_PROPERTIES_DIALOG_H__
 
-#include "ev-document.h"
+#include <evince-document.h>
 
 G_BEGIN_DECLS
 

@@ -110,12 +110,19 @@ dnl Check dependencies
 AC_SEARCH_LIBS([hypot],[m])
 
 # PKG_CHECK_MODULES(LIBDOCUMENT, gtk+-3.0 >= $GTK_REQUIRED gio-2.0 >= $GLIB_REQUIRED)
-PKG_CHECK_MODULES(LIBVIEW, gtk+-3.0 >= $GTK_REQUIRED gail$GAIL_API_VERSION >= $GTK_REQUIRED gthread-2.0 gio-2.0 >= $GLIB_REQUIRED)
-PKG_CHECK_MODULES(BACKEND, cairo >= $CAIRO_REQUIRED gtk+-3.0 >= $GTK_REQUIRED EvinceDocument-3.0 >= $LIBEVINCE_REQUIRED)
+# PKG_CHECK_MODULES(LIBVIEW, gtk+-3.0 >= $GTK_REQUIRED gail$GAIL_API_VERSION >= $GTK_REQUIRED gthread-2.0 gio-2.0 >= $GLIB_REQUIRED)
+PKG_CHECK_MODULES(EVINCE, evince-view-3.0 >= $LIBEVINCE_REQUIRED)
+# PKG_CHECK_MODULES(BACKEND, cairo >= $CAIRO_REQUIRED gtk+-3.0 >= $GTK_REQUIRED)
 PKG_CHECK_MODULES(FRONTEND_CORE, gtk+-3.0 >= $GTK_REQUIRED gthread-2.0 gio-2.0 >= $GLIB_REQUIRED)
 PKG_CHECK_MODULES(GMODULE, gmodule-2.0 >= $GLIB_REQUIRED)
 
-PKG_CHECK_MODULES([SHELL_CORE],[libxml-2.0 >= $LIBXML_REQUIRED gtk+-3.0 >= $GTK_REQUIRED gio-2.0 >= $GLIB_REQUIRED gthread-2.0 x11 libevince >= $LIBEVINCE_REQUIRED])
+PKG_CHECK_MODULES([SHELL_CORE],[libxml-2.0 >= $LIBXML_REQUIRED gtk+-3.0 >= $GTK_REQUIRED gio-2.0 >= $GLIB_REQUIRED gthread-2.0 x11 evince-view-3.0 >= $LIBEVINCE_REQUIRED evince-document-3.0 >= $LIBEVINCE_REQUIRED])
+
+
+EVINCE_CFLAGS="$EVINCE_CFLAGS $DEBUG_FLAGS"
+EVINCE_LIBS="$EVINCE_LIBS"
+AC_SUBST(EVINCE_CFLAGS)
+AC_SUBST(EVINCE_LIBS)
 
 dnl
 dnl zlib support
@@ -141,8 +148,8 @@ AC_SUBST([SMCLIENT_LIBS])
 
 # ***
 
-BACKEND_LIBTOOL_FLAGS="-module -avoid-version -no-undefined -export-symbols \$(top_srcdir)/backend/backend.symbols"
-AC_SUBST(BACKEND_LIBTOOL_FLAGS)
+# BACKEND_LIBTOOL_FLAGS="-module -avoid-version -no-undefined -export-symbols \$(top_srcdir)/backend/backend.symbols"
+#AC_SUBST(BACKEND_LIBTOOL_FLAGS)
 
 # ******************
 # GKT+ Unix Printing
@@ -213,21 +220,6 @@ AC_ARG_ENABLE([tests],
     [enable_tests=yes])
 
 AM_CONDITIONAL(ENABLE_TESTS, test x$enable_tests = xyes)
-
-# LIBDOCUMENT_CFLAGS="$LIBDOCUMENT_CFLAGS $DEBUG_FLAGS"
-# LIBDOCUMENT_LIBS="$LIBDOCUMENT_LIBS"
-# AC_SUBST(LIBDOCUMENT_CFLAGS)
-# AC_SUBST(LIBDOCUMENT_LIBS)
-
-LIBVIEW_CFLAGS="$LIBVIEW_CFLAGS $GTKUNIXPRINT_CFLAGS $DEBUG_FLAGS"
-LIBVIEW_LIBS="$LIBVIEW_LIBS $GTKUNIXPRINT_LIBS -lm"
-AC_SUBST(LIBVIEW_CFLAGS)
-AC_SUBST(LIBVIEW_LIBS)
-
-BACKEND_CFLAGS="$BACKEND_CFLAGS -DGDK_MULTIHEAD_SAFE -DGTK_MULTIHEAD_SAFE $DEBUG_FLAGS"
-BACKEND_LIBS="$BACKEND_LIBS -lm"
-AC_SUBST(BACKEND_CFLAGS)
-AC_SUBST(BACKEND_LIBS)
 
 SHELL_CFLAGS="$SHELL_CORE_CFLAGS $LIBSECRET_CFLAGS -DGDK_MULTIHEAD_SAFE -DGTK_MULTIHEAD_SAFE $DEBUG_FLAGS"
 SHELL_LIBS="$SHELL_CORE_LIBS $LIBSECRET_LIBS -lz -lm"
@@ -359,244 +351,6 @@ AC_CHECK_DECL([_NL_MEASUREMENT_MEASUREMENT],[
   AC_DEFINE([HAVE__NL_MEASUREMENT_MEASUREMENT],[1],[Define if _NL_MEASUREMENT_MEASUREMENT is available])
   ],[],[#include <langinfo.h>])
 
-dnl ================== pdf checks ===================================================
-AC_ARG_ENABLE([pdf],
-  [AS_HELP_STRING([--disable-pdf],
-                  [Disable the PDF support])],
-  [enable_pdf=$enableval],
-  [enable_pdf=yes])
-
-if test "x$enable_pdf" = "xyes"; then
-    POPPLER_REQUIRED=0.22.0
-    PKG_CHECK_MODULES(POPPLER, poppler-glib >= $POPPLER_REQUIRED libxml-2.0 >= $LIBXML_REQUIRED,enable_pdf=yes,enable_pdf=no)
-
-    if test "x$enable_pdf" = "xyes"; then
-        PKG_CHECK_MODULES(CAIRO_PDF, cairo-pdf, enable_cairo_pdf=yes, enable_cairo_pdf=no)
-        if test x$enable_cairo_pdf = xyes; then
-            AC_DEFINE([HAVE_CAIRO_PDF], [1], [defined if cairo-pdf is available])
-        fi
-
-        PKG_CHECK_MODULES(CAIRO_PS, cairo-ps, enable_cairo_ps=yes, enable_cairo_ps=no)
-        if test x$enable_cairo_ps = xyes; then
-            AC_DEFINE([HAVE_CAIRO_PS], [1], [defined if cairo-ps is available])
-        fi
-    else
-        AC_MSG_ERROR("PDF support is disabled since poppler-glib library version $POPPLER_REQUIRED or newer not found")
-    fi
-fi
-
-AM_CONDITIONAL(ENABLE_PDF, test x$enable_pdf = xyes)
-dnl ================== end of pdf checks ============================================
-
-dnl libspectre (used by ps and dvi backends)
-SPECTRE_REQUIRED=0.2.0
-PKG_CHECK_MODULES(SPECTRE, libspectre >= $SPECTRE_REQUIRED,have_spectre=yes,have_spectre=no)
-AM_CONDITIONAL(HAVE_SPECTRE, test x$have_spectre = xyes)
-if test "x$have_spectre" = "xyes"; then
-   AC_DEFINE([HAVE_SPECTRE], [1], [Have libspectre])
-fi
-
-dnl ================== ps checks ====================================================
-AC_ARG_ENABLE(ps,
-    [AS_HELP_STRING([--disable-ps],
-                    [Disable the PostScript backend])],
-    [enable_ps=$enableval],
-    [enable_ps=yes])
-
-if test "x$enable_ps" = "xyes"; then
-   if test "x$have_spectre" = "xyes"; then
-      AC_DEFINE([ENABLE_PS], [1], [Enable support for PostScript files.])
-   else
-      enable_ps="no"
-      AC_MSG_WARN([PS support is disabled since libspectre (version >= $SPECTRE_REQUIRED) is needed])
-   fi
-fi
-AM_CONDITIONAL(ENABLE_PS, test x$enable_ps = xyes)
-dnl ======================== End of ps checks ===================================
-
-dnl ================== tiff checks ===================================================
-AC_ARG_ENABLE(tiff,
-    [AS_HELP_STRING([--disable-tiff],
-                    [Disable the support of multipage tiff])],
-    [enable_tiff=$enableval],
-    [enable_tiff=yes])
-
-if test "x$enable_tiff" = "xyes"; then
-    AC_CHECK_HEADERS([tiff.h],enable_tiff=yes,enable_tiff=no,)
-    if test "x$enable_tiff" = "xyes"; then
-        AC_CHECK_LIB([tiff],TIFFOpen,enable_tiff=yes,enable_tiff=no,"-lz")
-        AC_CHECK_LIB([tiff],TIFFReadRGBAImageOriented,enable_tiff=yes,enable_tiff=no,"-lz")
-    fi
-    if test "x$enable_tiff" = "xyes"; then
-        AC_DEFINE([ENABLE_TIFF], [1], [Enable multipage tiff support.])
-    else
-        AC_MSG_WARN("Tiff support is disabled since tiff library version 3.6 or newer not found")
-    fi
-fi
-
-AM_CONDITIONAL(ENABLE_TIFF, test x$enable_tiff = xyes)
-dnl ================== end of tiff checks ============================================
-
-dnl ================== djvu checks ===================================================
-
-AC_ARG_ENABLE(djvu,
-    [AS_HELP_STRING([--disable-djvu],
-                    [Disable the support of djvu viewer])],
-    [enable_djvu=$enableval],
-    [enable_djvu=yes])
-
-if test "x$enable_djvu" = "xyes"; then
-    DJVULIBRE_REQUIRED=3.5.17
-    PKG_CHECK_MODULES(DJVU, ddjvuapi >= $DJVULIBRE_REQUIRED, enable_djvu=yes, enable_djvu=no)
-
-    if test "x$enable_djvu" = "xyes"; then
-        AC_DEFINE([ENABLE_DJVU], [1], [Enable djvu viewer support.])
-    else
-    AC_MSG_WARN([
-** Djvu support is disabled since a recent version of the djvulibre
-** library was not found. You need at least djvulibre-3.5.17 which
-** can be found on http://djvulibre.djvuzone.org
-])
-    fi
-fi
-
-AM_CONDITIONAL(ENABLE_DJVU, test x$enable_djvu = xyes)
-
-dnl ================== End of djvu checks ===================================================
-
-dnl ================== dvi checks ===================================================
-
-AC_ARG_ENABLE(dvi,
-    [AS_HELP_STRING([--disable-dvi],
-                    [Disable the support of dvi viewer])],
-    [enable_dvi=$enableval],
-    [enable_dvi=yes])
-
-AC_ARG_ENABLE(t1lib,
-    [AS_HELP_STRING([--enable-t1lib],
-                    [Compile with support of t1lib for type1 fonts in dvi])],
-    [enable_type1_fonts=$enableval],
-    [enable_type1_fonts=no])
-
-if test "x$enable_dvi" = "xyes"; then
-    AC_C_CONST
-    AC_C_INLINE
-    AC_TYPE_SIZE_T
-    AC_CHECK_SIZEOF(long, 4)
-    AC_CHECK_SIZEOF(int, 4)
-    AC_CHECK_SIZEOF(short, 2)
-    AC_CHECK_SIZEOF(void *, 4)
-    AC_CHECK_LIB([kpathsea], [kpse_init_prog], [enable_dvi=yes], [enable_dvi=no])
-
-    if test "x$enable_dvi" = "xyes"; then
-        AC_DEFINE([ENABLE_DVI], [1], [Enable dvi viewer support.])
-    else
-        AC_MSG_WARN("Dvi support is disabled since kpathsea library is not found. Check your TeX installation.")
-    fi
-fi
-AM_CONDITIONAL(ENABLE_DVI, test x$enable_dvi = xyes)
-
-if test "x$enable_dvi" = "xyes"; then
-    if test "x$enable_type1_fonts" = "xyes"; then
-        AC_CHECK_LIB([t1],T1_InitLib,enable_type1_fonts=yes,enable_type1_fonts=no,[-lm])
-    fi
-
-    if test "x$enable_type1_fonts" = xyes; then
-        AC_DEFINE([WITH_TYPE1_FONTS], [1], [Enable t1lib support in dvi.])
-    fi
-else
-    enable_type1_fonts=no
-fi
-AM_CONDITIONAL(WITH_TYPE1_FONTS, test x$enable_type1_fonts = xyes)
-
-dnl ================== End of dvi checks ===================================================
-
-dnl ================== pixbuf checks ===================================================
-
-AC_ARG_ENABLE(pixbuf,
-    [AS_HELP_STRING([--enable-pixbuf],
-                    [Compile with support of pixbuf])],
-    [enable_pixbuf=$enableval],
-    [enable_pixbuf=no])
-
-if test "x$enable_pixbuf" = "xyes"; then
-    AC_DEFINE([ENABLE_PIXBUF], [1], [Enable pixbuf support.])
-fi
-
-AM_CONDITIONAL(ENABLE_PIXBUF, test x$enable_pixbuf = xyes)
-
-dnl ================== End of pixbuf checks ===================================================
-
-dnl ================== comic book checks ===================================================
-
-AC_ARG_ENABLE(comics,
-    [AS_HELP_STRING([--enable-comics],
-                    [Compile with support for comic book archives])],
-    [enable_comics=$enableval],
-    [enable_comics=yes])
-
-if test "x$enable_comics" = "xyes"; then
-    AC_DEFINE([ENABLE_COMICS], [1], [Enable support for comics.])
-fi
-AM_CONDITIONAL(ENABLE_COMICS, test x$enable_comics = xyes)
-
-dnl ================== End of comic book checks ============================================
-
-dnl ================== XPS checks ===================================================
-
-AC_ARG_ENABLE(xps,
-	[AS_HELP_STRING([--enable-xps],
-			[Compile with support for XPS documents.])],
-	[enable_xps=$enableval],
-	[enable_xps=yes])
-
-if test "x$enable_xps" = "xyes"; then
-   GXPS_REQUIRED=0.2.1
-   PKG_CHECK_MODULES(GXPS, libgxps >= $GXPS_REQUIRED,enable_xps=yes,enable_xps=no)
-
-   if test "x$enable_xps" = "xyes"; then
-      AC_DEFINE([ENABLE_XPS], [1], [Enable support for XPS documents.])
-   else
-      enable_xps="no"
-      AC_MSG_WARN(["XPS support is disabled since libgxps (version >= $GXPS_REQUIRED) is needed"])
-   fi
-fi
-
-AM_CONDITIONAL(ENABLE_XPS, test x$enable_xps = xyes)
-
-dnl ================== End of XPS checks ===================================================
-
-
-dnl ================== EPUB checks ===================================================
-
-AC_ARG_ENABLE(epub,
-	[AS_HELP_STRING([--enable-epub],
-			[Compile with support for epub documents.])],
-	[enable_epub=$enableval],
-	[enable_epub=yes])
-
-have_webkit="no"
-if test "x$enable_epub" = "xyes"; then
-   PKG_CHECK_MODULES(EPUB, webkit2gtk-$WEBKIT_API_VERSION >= $WEBKIT_REQUIRED \
-	libxml-2.0 >= $LIBXML_REQUIRED zlib,have_webkit=yes,have_webkit=no)
-   if test "x$have_webkit" = "xno"; then
-      AC_MSG_NOTICE([Webkit2 4.0 not found, trying 3.0])
-      WEBKIT_API_VERSION=3.0
-      PKG_CHECK_MODULES(EPUB, webkit2gtk-$WEBKIT_API_VERSION >= $WEBKIT_REQUIRED \
-	libxml-2.0 >= $LIBXML_REQUIRED zlib,have_webkit=yes,have_webkit=no)
-   fi
-
-   if test "x$have_webkit" = "xyes"; then
-      AC_DEFINE([ENABLE_EPUB], [1], [Enable support for ePub documents.])
-   else
-      AC_MSG_WARN(["ePub support is disabled."])
-   fi
-fi
-
-AM_CONDITIONAL(ENABLE_EPUB, test x$have_webkit = xyes)
-
-dnl ================== End of EPUB checks ===================================================
-
 dnl =================== Mime types list ====================================================
 
 if test "x$enable_pdf" = "xyes" ; then
@@ -650,8 +404,6 @@ AC_SUBST([GTK_PREFIX], [$($PKG_CONFIG --variable=prefix gtk+-3.0)])
 # Backends directory
 # ******************
 
-AC_SUBST([backenddir],"\$(libdir)/xreader/ev_binary_version/backends")
-AC_SUBST([backend_binary_version], "ev_binary_version")
 
 # **********
 # Versioning
@@ -665,27 +417,15 @@ AC_SUBST([EV_API_VERSION], [ev_api_version])
 AC_SUBST([EV_API_VERSION_U], [AS_TR_SH([ev_api_version])])
 AC_SUBST([EV_BINARY_VERSION], [ev_binary_version])
 
-AC_SUBST([EV_DOCUMENT_LT_VERSION_INFO],[ev_document_lt_version_info])
-AC_SUBST([EV_DOCUMENT_LT_CURRENT_MINUS_AGE],[ev_document_lt_current_minus_age])
-AC_SUBST([EV_VIEW_LT_VERSION_INFO], [ev_view_lt_version_info])
-AC_SUBST([EV_VIEW_LT_CURRENT_MINUS_AGE], [ev_view_lt_current_minus_age])
+#AC_SUBST([EV_DOCUMENT_LT_VERSION_INFO],[ev_document_lt_version_info])
+#AC_SUBST([EV_DOCUMENT_LT_CURRENT_MINUS_AGE],[ev_document_lt_current_minus_age])
+#AC_SUBST([EV_VIEW_LT_VERSION_INFO], [ev_view_lt_version_info])
+#AC_SUBST([EV_VIEW_LT_CURRENT_MINUS_AGE], [ev_view_lt_current_minus_age])
 
 # *****************************************************************************
 # *****************************************************************************
 
 AC_CONFIG_FILES([
-backend/Makefile
-backend/comics/Makefile
-backend/djvu/Makefile
-backend/dvi/Makefile
-backend/dvi/mdvi-lib/Makefile
-backend/epub/Makefile
-backend/epub/minizip/Makefile
-backend/pdf/Makefile
-backend/pixbuf/Makefile
-backend/ps/Makefile
-backend/tiff/Makefile
-backend/xps/Makefile
 cut-n-paste/Makefile
 cut-n-paste/smclient/Makefile
 cut-n-paste/zoom-control/Makefile
@@ -718,14 +458,9 @@ data/icons/scalable/actions/Makefile
 data/icons/scalable/mimetypes/Makefile
 help/Makefile
 help/reference/Makefile
-help/reference/libdocument/Makefile
-help/reference/libdocument/version.xml
-help/reference/libview/Makefile
-help/reference/libview/version.xml
 help/reference/shell/Makefile
 help/reference/shell/version.xml
 libmisc/Makefile
-libview/Makefile
 Makefile
 po/Makefile.in
 previewer/Makefile
@@ -739,7 +474,7 @@ thumbnailer/Makefile
 ])
 
 #AC_CONFIG_FILES(xreader-document-[]ev_api_version[].pc:xreader-document.pc.in)
-AC_CONFIG_FILES(xreader-view-[]ev_api_version[].pc:xreader-view.pc.in)
+#AC_CONFIG_FILES(xreader-view-[]ev_api_version[].pc:xreader-view.pc.in)
 
 AC_OUTPUT
 

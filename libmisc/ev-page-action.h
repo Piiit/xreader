@@ -22,9 +22,8 @@
 #define EV_PAGE_ACTION_H
 
 #include <gtk/gtk.h>
-
-#include <xreader-document.h>
-#include <xreader-view.h>
+#include <evince-view.h>
+#include <evince-document.h>
 
 G_BEGIN_DECLS
 

@@ -25,7 +25,6 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 
-#include "ev-document-fonts.h"
 #include "ev-properties-dialog.h"
 #include "ev-properties-fonts.h"
 #include "ev-properties-view.h"

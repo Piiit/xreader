@@ -24,8 +24,7 @@
 #include <glib-object.h>
 #include <glib.h>
 
-#include "ev-document.h"
-#include "ev-document-model.h"
+#include <evince-document.h>
 
 G_BEGIN_DECLS
 

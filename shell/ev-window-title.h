@@ -21,7 +21,6 @@
 #define __EV_WINDOW_TITLE_H__
 
 #include "ev-window.h"
-#include "ev-document.h"
 
 G_BEGIN_DECLS
 

@@ -26,8 +26,8 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 
-#include "ev-link.h"
-#include "ev-document-model.h"
+#include <evince-document.h>
+#include <evince-view.h>
 
 G_BEGIN_DECLS
 

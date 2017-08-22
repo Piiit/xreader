@@ -21,7 +21,6 @@
 #include <config.h>
 
 #include "ev-utils.h"
-#include "ev-file-helpers.h"
 
 #include <string.h>
 #include <math.h>

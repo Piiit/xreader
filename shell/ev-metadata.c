@@ -22,7 +22,6 @@
 #include <string.h>
 
 #include "ev-metadata.h"
-#include "ev-file-helpers.h"
 
 struct _EvMetadata {
 	GObject base;

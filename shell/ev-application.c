@@ -37,8 +37,6 @@
 #include "eggsmclient.h"
 
 #include "ev-application.h"
-#include "ev-file-helpers.h"
-#include "ev-stock-icons.h"
 
 struct _EvApplication {
 	GObject base_instance;

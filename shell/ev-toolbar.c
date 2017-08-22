@@ -5,9 +5,9 @@
 #include "config.h"
 
 #include <glib/gi18n.h>
+#include <evince-document.h>
 
 #include "ev-toolbar.h"
-#include "ev-document-model.h"
 
 enum
 {

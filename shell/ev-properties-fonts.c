@@ -25,9 +25,7 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 
-#include "ev-document-fonts.h"
-#include "ev-job-scheduler.h"
-#include "ev-jobs.h"
+#include <evince-view.h>
 #include "ev-properties-fonts.h"
 
 struct _EvPropertiesFonts {
