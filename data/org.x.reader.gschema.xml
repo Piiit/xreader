@@ -73,4 +73,10 @@
     </key>
   </schema>
 
+  <schema id="org.x.reader.Toolbar" path="/org/x/reader/toolbar/" gettext-domain="xreader">
+    <key name="show-expand-window" type="b">
+      <default>false</default>
+    </key>
+  </schema>
+
 </schemalist>

@@ -148,6 +148,7 @@ struct _EvWindowPrivate {
 	/* Settings */
 	GSettings *settings;
 	GSettings *default_settings;
+	GSettings *toolbar_settings;
 
 	/* Menubar accels */
 	guint           menubar_accel_keyval;
@@ -7206,7 +7207,8 @@ ev_window_init (EvWindow *ev_window)
 	gtk_revealer_set_transition_duration (GTK_REVEALER (ev_window->priv->toolbar_revealer), 175);
 	gtk_widget_show (ev_window->priv->toolbar_revealer);
 
-	ev_window->priv->toolbar = ev_toolbar_new (ev_window);
+	ev_window->priv->toolbar_settings = g_settings_new (GS_SCHEMA_NAME".Toolbar");
+	ev_window->priv->toolbar = ev_toolbar_new (ev_window, ev_window->priv->toolbar_settings);
 	gtk_container_add (GTK_CONTAINER (ev_window->priv->toolbar_revealer), ev_window->priv->toolbar);
 	gtk_widget_show (ev_window->priv->toolbar);
 

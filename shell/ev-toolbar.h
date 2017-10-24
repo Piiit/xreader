@@ -34,7 +34,7 @@ struct _EvToolbarClass
 };
 
 GType ev_toolbar_get_type (void);
-GtkWidget *ev_toolbar_new (EvWindow *window);
+GtkWidget *ev_toolbar_new (EvWindow *window, GSettings *settings);
 
 void ev_toolbar_set_style (EvToolbar *ev_toolbar,
                            gboolean   is_fullscreen);

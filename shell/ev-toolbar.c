@@ -12,7 +12,8 @@
 enum
 {
     PROP_0,
-    PROP_WINDOW
+    PROP_WINDOW,
+    PROP_SETTINGS
 };
 
 struct _EvToolbarPrivate
@@ -24,6 +25,8 @@ struct _EvToolbarPrivate
     GtkWidget *expand_window_button;
     GtkWidget *page_preset_button;
     GtkWidget *reader_preset_button;
+
+    GSettings *settings;
 
     EvWindow *window;
     EvDocumentModel *model;
@@ -43,6 +46,9 @@ ev_toolbar_set_property (GObject      *object,
     {
         case PROP_WINDOW:
             ev_toolbar->priv->window = g_value_get_object (value);
+            break;
+        case PROP_SETTINGS:
+            ev_toolbar->priv->settings = g_value_get_object(value);
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -279,6 +285,11 @@ ev_toolbar_constructed (GObject *object)
     g_signal_connect (ev_toolbar->priv->model, "notify::sizing-mode",
                       G_CALLBACK (ev_toolbar_document_model_changed_cb), ev_toolbar);
 
+    /* Toolbar buttons visibility bindings */
+    g_settings_bind (ev_toolbar->priv->settings, "show-expand-window",
+                     ev_toolbar->priv->expand_window_button, "visible",
+                     G_SETTINGS_BIND_DEFAULT);
+
     ev_toolbar_document_model_changed_cb (ev_toolbar->priv->model, NULL, ev_toolbar);
 }
 
@@ -300,6 +311,17 @@ ev_toolbar_class_init (EvToolbarClass *klass)
                                                           G_PARAM_CONSTRUCT_ONLY |
                                                           G_PARAM_STATIC_STRINGS));
 
+    g_object_class_install_property (object_class,
+                                     PROP_SETTINGS,
+                                     g_param_spec_object ("settings",
+                                                          "Settings",
+                                                          "The xreader gsettings",
+                                                          G_TYPE_SETTINGS,
+                                                          G_PARAM_WRITABLE |
+                                                          G_PARAM_CONSTRUCT_ONLY |
+                                                          G_PARAM_STATIC_STRINGS));
+
+
     g_type_class_add_private (object_class, sizeof (EvToolbarPrivate));
 }
 
@@ -310,11 +332,12 @@ ev_toolbar_init (EvToolbar *ev_toolbar)
 }
 
 GtkWidget *
-ev_toolbar_new (EvWindow *window)
+ev_toolbar_new (EvWindow *window, GSettings *settings)
 {
     g_return_val_if_fail (EV_IS_WINDOW (window), NULL);
+    g_return_val_if_fail (G_IS_SETTINGS(settings), NULL);
 
-    return GTK_WIDGET (g_object_new (EV_TYPE_TOOLBAR, "window", window, NULL));
+    return GTK_WIDGET (g_object_new (EV_TYPE_TOOLBAR, "window", window, "settings", settings, NULL));
 }
 
 void
