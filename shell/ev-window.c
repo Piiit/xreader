@@ -237,6 +237,8 @@ struct _EvWindowPrivate {
 #endif
 
 #define GS_SCHEMA_NAME           "org.x.reader"
+#define GS_SCHEMA_NAME_TOOLBAR   "org.x.reader.toolbar"
+#define GS_SCHEMA_NAME_DEFAULT   "org.x.reader.default"
 #define GS_OVERRIDE_RESTRICTIONS "override-restrictions"
 #define GS_PAGE_CACHE_SIZE       "page-cache-size"
 #define GS_AUTO_RELOAD           "auto-reload"
@@ -5598,6 +5600,11 @@ ev_window_dispose (GObject *object)
 		priv->default_settings = NULL;
 	}
 
+	if (priv->toolbar_settings) {
+		g_object_unref (priv->toolbar_settings);
+		priv->toolbar_settings = NULL;
+	}
+
 	priv->recent_ui_id = 0;
 
 	if (priv->model) {
@@ -5878,10 +5885,10 @@ static const GtkActionEntry entries[] = {
         { "GoLastPage", "go-last-symbolic", N_("_Last Page"), "<control>End",
           N_("Go to the last page"),
           G_CALLBACK (ev_window_cmd_go_last_page) },
-        { "GoPreviousHistory", NULL, N_("Previous History Item"), NULL,
+        { "GoPreviousHistory", "view-sort-ascending-symbolic", N_("Previous History Item"), NULL,
           N_("Go to previous history item"),
           G_CALLBACK (ev_window_cmd_go_previous_history) },
-        { "GoNextHistory", NULL, N_("Next History Item"), NULL,
+        { "GoNextHistory", "view-sort-descending-symbolic", N_("Next History Item"), NULL,
           N_("Go to next history item"),
           G_CALLBACK (ev_window_cmd_go_next_history) },
 
@@ -7207,7 +7214,7 @@ ev_window_init (EvWindow *ev_window)
 	gtk_revealer_set_transition_duration (GTK_REVEALER (ev_window->priv->toolbar_revealer), 175);
 	gtk_widget_show (ev_window->priv->toolbar_revealer);
 
-	ev_window->priv->toolbar_settings = g_settings_new (GS_SCHEMA_NAME".Toolbar");
+	ev_window->priv->toolbar_settings = g_settings_new (GS_SCHEMA_NAME_TOOLBAR);
 	ev_window->priv->toolbar = ev_toolbar_new (ev_window, ev_window->priv->toolbar_settings);
 	gtk_container_add (GTK_CONTAINER (ev_window->priv->toolbar_revealer), ev_window->priv->toolbar);
 	gtk_widget_show (ev_window->priv->toolbar);
@@ -7473,7 +7480,7 @@ ev_window_init (EvWindow *ev_window)
 	/* Give focus to the document view */
 	gtk_widget_grab_focus (ev_window->priv->view);
 
-	ev_window->priv->default_settings = g_settings_new (GS_SCHEMA_NAME".Default");
+	ev_window->priv->default_settings = g_settings_new (GS_SCHEMA_NAME_DEFAULT);
 	g_settings_delay (ev_window->priv->default_settings);
 	ev_window_setup_default (ev_window);
 	update_chrome_actions (ev_window);

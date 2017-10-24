@@ -25,6 +25,7 @@ struct _EvToolbarPrivate
     GtkWidget *expand_window_button;
     GtkWidget *page_preset_button;
     GtkWidget *reader_preset_button;
+    GtkWidget *history_group;
 
     GSettings *settings;
 
@@ -218,6 +219,25 @@ ev_toolbar_constructed (GObject *object)
     gtk_container_add (GTK_CONTAINER (ev_toolbar), GTK_WIDGET (tool_item));
     gtk_widget_show (GTK_WIDGET (tool_item));
 
+    /* History Navigation */
+    tool_item = gtk_tool_item_new ();
+    gtk_container_add (GTK_CONTAINER (ev_toolbar), GTK_WIDGET (tool_item));
+    gtk_widget_show (GTK_WIDGET (tool_item));
+
+    ev_toolbar->priv->history_group = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_container_add (GTK_CONTAINER (tool_item), ev_toolbar->priv->history_group);
+    gtk_widget_show (GTK_WIDGET (ev_toolbar->priv->history_group));
+
+    action = gtk_action_group_get_action (action_group, "GoPreviousHistory");
+    button = create_button (action);
+    gtk_box_pack_start (GTK_BOX (ev_toolbar->priv->history_group), button, FALSE, FALSE, 0);
+    gtk_widget_show (GTK_WIDGET (button));
+
+    action = gtk_action_group_get_action (action_group, "GoNextHistory");
+    button = create_button (action);
+    gtk_box_pack_start (GTK_BOX (ev_toolbar->priv->history_group), button, FALSE, FALSE, 0);
+    gtk_widget_show (GTK_WIDGET (button));
+
     /* Zoom */
     tool_item = gtk_tool_item_new ();
     gtk_tool_item_set_expand (tool_item, TRUE);
@@ -288,6 +308,9 @@ ev_toolbar_constructed (GObject *object)
     /* Toolbar buttons visibility bindings */
     g_settings_bind (ev_toolbar->priv->settings, "show-expand-window",
                      ev_toolbar->priv->expand_window_button, "visible",
+                     G_SETTINGS_BIND_DEFAULT);
+    g_settings_bind (ev_toolbar->priv->settings, "show-history-buttons",
+                     ev_toolbar->priv->history_group, "visible",
                      G_SETTINGS_BIND_DEFAULT);
 
     ev_toolbar_document_model_changed_cb (ev_toolbar->priv->model, NULL, ev_toolbar);
