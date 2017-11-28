@@ -70,6 +70,7 @@
 #include "ev-history-action.h"
 #include "ev-password-view.h"
 #include "ev-properties-dialog.h"
+#include "ev-preferences-dialog.h"
 #include "ev-sidebar-annotations.h"
 #include "ev-sidebar-attachments.h"
 #include "ev-sidebar-bookmarks.h"
@@ -161,6 +162,7 @@ struct _EvWindowPrivate {
 	/* Dialogs */
 	GtkWidget *properties;
 	GtkWidget *print_dialog;
+	GtkWidget *preferences;
 
 	/* UI Builders */
 	GtkActionGroup   *action_group;
@@ -1796,10 +1798,14 @@ ev_window_close_dialogs (EvWindow *ev_window)
 	if (ev_window->priv->print_dialog)
 		gtk_widget_destroy (ev_window->priv->print_dialog);
 	ev_window->priv->print_dialog = NULL;
-	
+
 	if (ev_window->priv->properties)
 		gtk_widget_destroy (ev_window->priv->properties);
 	ev_window->priv->properties = NULL;
+
+	if (ev_window->priv->preferences)
+		gtk_widget_destroy (ev_window->priv->preferences);
+	ev_window->priv->preferences = NULL;
 }
 
 static void
@@ -3489,6 +3495,18 @@ ev_window_cmd_file_properties (GtkAction *action, EvWindow *ev_window)
 
 	ev_document_fc_mutex_lock ();
 	gtk_widget_show (ev_window->priv->properties);
+	ev_document_fc_mutex_unlock ();
+}
+
+static void
+ev_window_cmd_edit_preferences (GtkAction *action, EvWindow *ev_window)
+{
+	if (ev_window->priv->preferences == NULL) {
+		ev_window->priv->preferences = ev_preferences_dialog_new(ev_window);
+		g_object_add_weak_pointer (G_OBJECT (ev_window->priv->preferences), (gpointer) &(ev_window->priv->preferences));
+	}
+	ev_document_fc_mutex_lock ();
+	gtk_window_present (GTK_WINDOW(ev_window->priv->preferences));
 	ev_document_fc_mutex_unlock ();
 }
 
@@ -5850,6 +5868,8 @@ static const GtkActionEntry entries[] = {
 	  G_CALLBACK (ev_window_cmd_edit_rotate_right) },
 	{ "EditSaveSettings", NULL, N_("Save Current Settings as _Default"), "<control>T", NULL,
 	  G_CALLBACK (ev_window_cmd_edit_save_settings) },
+	{ "EditPreferences", NULL, N_("Preferences"), "<shift><control>P", NULL,
+	  G_CALLBACK (ev_window_cmd_edit_preferences) },
 
 
         /* View menu */
@@ -7215,7 +7235,7 @@ ev_window_init (EvWindow *ev_window)
 	gtk_widget_show (ev_window->priv->toolbar_revealer);
 
 	ev_window->priv->toolbar_settings = g_settings_new (GS_SCHEMA_NAME_TOOLBAR);
-	ev_window->priv->toolbar = ev_toolbar_new (ev_window, ev_window->priv->toolbar_settings);
+	ev_window->priv->toolbar = ev_toolbar_new (ev_window);
 	gtk_container_add (GTK_CONTAINER (ev_window->priv->toolbar_revealer), ev_window->priv->toolbar);
 	gtk_widget_show (ev_window->priv->toolbar);
 

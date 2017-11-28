@@ -336,8 +336,8 @@ ev_toolbar_class_init (EvToolbarClass *klass)
 static void
 ev_toolbar_init (EvToolbar *ev_toolbar)
 {
-	ev_toolbar->priv->settings = g_settings_new ("org.x.reader.toolbar");
     ev_toolbar->priv = G_TYPE_INSTANCE_GET_PRIVATE (ev_toolbar, EV_TYPE_TOOLBAR, EvToolbarPrivate);
+	ev_toolbar->priv->settings = g_settings_new ("org.x.reader.toolbar");
 }
 
 GtkWidget *
