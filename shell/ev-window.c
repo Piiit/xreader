@@ -4645,17 +4645,23 @@ ev_window_cmd_view_autoscroll (GtkAction *action, EvWindow *ev_window)
 static void
 ev_window_cmd_help_contents (GtkAction *action, EvWindow *ev_window)
 {
-	GError  *error = NULL;
+	ev_window_show_help(ev_window, NULL);
+}
 
-	gtk_show_uri (gtk_window_get_screen (GTK_WINDOW (ev_window)),
-		      EV_HELP,
-		      gtk_get_current_event_time (),
-		      &error);
-	if (error) {
-		ev_window_error_message (ev_window, error, 
-					 "%s", _("There was an error displaying help"));
-		g_error_free (error);
-	}
+void
+ev_window_show_help(EvWindow *ev_window, const gchar *uri)
+{
+    GError  *error       = NULL;
+    gchar   *help_page   = EV_HELP;
+
+    if (uri) {
+        help_page = g_strdup_printf ("%s:%s", EV_HELP, uri);
+    }
+    gtk_show_uri(gtk_window_get_screen(GTK_WINDOW(ev_window)), help_page, gtk_get_current_event_time(), &error);
+    if (error) {
+        ev_window_error_message(ev_window, error, "%s", _("There was an error displaying help"));
+        g_error_free(error);
+    }
 }
 
 static void

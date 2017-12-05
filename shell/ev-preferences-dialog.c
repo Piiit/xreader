@@ -93,8 +93,7 @@ help_button_clicked (GtkButton *button,
                      gpointer   data)
 {
     EvPreferencesDialog *dlg = EV_PREFERENCES_DIALOG (data);
-
-//    xed_app_show_help (XED_APP (g_application_get_default ()), GTK_WINDOW (dlg), NULL, "ev-prefs");
+    ev_window_show_help(GTK_WINDOW(dlg), NULL);
 }
 
 static void
