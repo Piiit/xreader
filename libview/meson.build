@@ -78,6 +78,7 @@ libview_deps = [
 
 if get_option('epub')
    libview_deps += webkit
+   libview_deps += gepub
 endif
 
 libview = library(

@@ -32,6 +32,7 @@
 #include <libxml/xmlmemory.h>
 #include <libxml/HTMLparser.h>
 #include <config.h>
+#include <libgepub-0.6/gepub.h>
 
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
@@ -84,6 +85,9 @@ struct _EpubDocument
 	GList *index;
 	/*Document title, for the sidebar links*/
 	gchar *docTitle;
+
+
+    GepubDoc *gepub_doc;
 };
 
 static void       epub_document_document_thumbnails_iface_init (EvDocumentThumbnailsInterface *iface);
@@ -100,6 +104,10 @@ EV_BACKEND_REGISTER_WITH_CODE (EpubDocument, epub_document,
                                  epub_document_document_links_iface_init);
 
 	} );
+
+gchar *   gepub_utils_get_prop            (xmlNode *node, const gchar *prop);
+xmlNode * gepub_utils_get_element_by_tag  (xmlNode *node, const gchar *name);
+
 
 static void
 epub_document_thumbnails_get_dimensions (EvDocumentThumbnails *document,
@@ -375,15 +383,16 @@ static int
 epub_document_get_n_pages (EvDocument *document)
 {
     EpubDocument *epub_document = EPUB_DOCUMENT (document);
+    return gepub_doc_get_n_chapters(epub_document->gepub_doc);
 
-    if (epub_document-> contentList == NULL)
-        return 0;
+    // PEMOSER No longer needed
+    // if (epub_document-> contentList == NULL)
+    //     return 0;
 
-    return g_list_length(epub_document->contentList);
+    // return g_list_length(epub_document->contentList);
 }
 
 /**
- * epub_remove_temporary_dir : Removes a directory recursively.
  * This function is same as comics_remove_temporary_dir
  * Returns:
  *   	0 if it was successfully deleted,
@@ -625,10 +634,11 @@ xml_get_data_from_node(xmlNodePtr node,
 }
 
 static gboolean
-check_mime_type(const gchar* uri,GError** error)
+check_mime_type(const gchar* uri, GError** error)
 {
     GError * err = NULL ;
     const gchar* mimeFromFile = ev_file_get_mime_type(uri,FALSE,&err);
+    printf("MIME FROM XREADER %s\n", mimeFromFile); fflush(stdout);
 
     gchar* mimetypes[] = {"application/epub+zip","application/x-booki+zip"};
     int typecount = 2;
@@ -1608,20 +1618,21 @@ epub_document_toggle_night_mode(EvDocument *document,gboolean night)
         g_list_foreach(epub_document->contentList,(GFunc)change_to_day_sheet,NULL);
 }
 
-static gchar*
-epub_document_set_document_title(gchar *containeruri)
-{
-	open_xml_document(containeruri);
-	gchar *doctitle;
-	set_xml_root_node(NULL);
+// PEMOSER No longer needed
+// static gchar*
+// epub_document_set_document_title(gchar *containeruri)
+// {
+// 	open_xml_document(containeruri);
+// 	gchar *doctitle;
+// 	set_xml_root_node(NULL);
 
-	xmlNodePtr title = xml_get_pointer_to_node((xmlChar*)"title",NULL,NULL);
+// 	xmlNodePtr title = xml_get_pointer_to_node((xmlChar*)"title",NULL,NULL);
 
-	doctitle = (gchar*)xml_get_data_from_node(title, XML_KEYWORD, NULL);
-	xml_free_doc();
+// 	doctitle = (gchar*)xml_get_data_from_node(title, XML_KEYWORD, NULL);
+// 	xml_free_doc();
 
-	return doctitle;
-}
+// 	return doctitle;
+// }
 
 static void
 page_set_function(linknode *Link, GList *contentList)
@@ -1734,6 +1745,25 @@ epub_document_load (EvDocument* document,
 	EpubDocument *epub_document = EPUB_DOCUMENT(document);
 	GError *err = NULL;
 
+    // FIXME PEMOSER This is just a hack
+    const gchar *path = g_utf8_substring(uri, 7, g_utf8_strlen(uri, 150));
+
+    printf("PATH %s\n", path); fflush(stdout);
+
+    // gepub widget
+    epub_document->gepub_doc = gepub_doc_new (path, &err);
+    if (!epub_document->gepub_doc) {
+        perror ("BAD epub FILE");
+        g_propagate_error(error, err);
+        return FALSE;
+    }
+
+    printf("MIME %s\n", gepub_doc_get_current_mime(epub_document->gepub_doc)); fflush(stdout);
+     
+
+    // PEMOSER We keep it, since it checks mimetypes of the epub file
+    // itself (epub+zip for instance), and not the extracted contents
+    // filetype (mostly application/xhmtl+xml) for epubs.
 	if ( check_mime_type (uri, &err) == FALSE )
 	{
 		/*Error would've been set by the function*/
@@ -1770,8 +1800,26 @@ epub_document_load (EvDocument* document,
 		return FALSE;
 	}
 
-	epub_document->docTitle = epub_document_set_document_title(contentOpfUri);
-	epub_document->index = setup_document_index(epub_document,contentOpfUri);
+	// epub_document->docTitle = epub_document_set_document_title(contentOpfUri);
+    epub_document->docTitle =  gepub_doc_get_metadata (epub_document->gepub_doc, GEPUB_META_TITLE);
+    printf("TITLE %s\n", epub_document->docTitle);
+
+	// epub_document->index = setup_document_index(epub_document,contentOpfUri);
+    xmlDoc *xdoc = NULL;
+    xmlNode *root_element = NULL;
+    xmlNode *snode = NULL;
+    const char *data;
+    gsize size;
+
+    data = g_bytes_get_data (epub_document->gepub_doc->content, &size);
+    xdoc = xmlRecoverMemory (data, size);
+    root_element = xmlDocGetRootElement (xdoc);
+    snode = gepub_utils_get_element_by_tag (root_element, "spine");
+    gchar *toc = gepub_utils_get_prop (snode, "toc");
+    if (toc) {
+        epub_document->index = gepub_doc_fill_toc(epub_document->gepub_doc, toc, epub_document->index);
+        g_free (toc);
+    }
 
 	epub_document->contentList = setup_document_content_list (contentOpfUri,&err,epub_document->documentdir);
 
@@ -1799,8 +1847,106 @@ epub_document_init (EpubDocument *epub_document)
 	epub_document->documentdir = NULL;
 	epub_document->index = NULL;
 	epub_document->docTitle = NULL;
+    epub_document->gepub_doc = NULL;
 }
 
+// Copy/paste from gepub
+static gint
+navpoint_compare (GepubNavPoint *a, GepubNavPoint *b)
+{
+    return a->playorder - b->playorder;
+}
+
+// Copy/paste from gepub
+static GList *
+gepub_doc_fill_toc (GepubDoc *doc, gchar *toc_id, GList *toc)
+{
+    xmlDoc *xdoc = NULL;
+    xmlNode *root_element = NULL;
+    xmlNode *mapnode = NULL;
+    xmlNode *item = NULL;
+    const char *data;
+    gsize size;
+    GBytes *toc_data = NULL;
+
+    toc_data = gepub_doc_get_resource_by_id (doc, toc_id);
+    if (!toc_data) {
+        return;
+    }
+
+    data = g_bytes_get_data (toc_data, &size);
+    xdoc = xmlRecoverMemory (data, size);
+    root_element = xmlDocGetRootElement (xdoc);
+    mapnode = gepub_utils_get_element_by_tag (root_element, "navMap");
+
+    // TODO: get docTitle
+    // TODO: parse metadata (dtb:totalPageCount, dtb:depth, dtb:maxPageNumber)
+
+    item = mapnode->children;
+    while (item) {
+        GepubNavPoint *navpoint = NULL;
+        gchar *order;
+        xmlNode *navchilds = NULL;
+
+        if (item->type != XML_ELEMENT_NODE ||
+            g_strcmp0 ((const gchar *)item->name, "navPoint")) {
+            item = item->next;
+            continue;
+        }
+
+        navpoint = g_malloc0 (sizeof (GepubNavPoint));
+
+        order = gepub_utils_get_prop (item, "playOrder");
+        if (order) {
+            g_ascii_string_to_unsigned (order, 10, 0, INT_MAX,
+                                        &navpoint->playorder, NULL);
+            g_free (order);
+        }
+
+        // parsing navPoint->navLabel->text and navPoint->content
+        navchilds = item->children;
+        while (navchilds) {
+            if (item->type != XML_ELEMENT_NODE) {
+                navchilds = navchilds->next;
+                continue;
+            }
+
+            if (!g_strcmp0 ((const gchar *)navchilds->name, "content")) {
+                gchar **split;
+                gchar *tmpuri;
+                tmpuri = gepub_utils_get_prop (navchilds, "src");
+                // removing # params. Maybe we should store the # params in the
+                // navpoint to use in the future if the doc references to a position
+                // inside the chapter
+                split = g_strsplit (tmpuri, "#", -1);
+
+                // adding the base path
+                // TODO PEMOSER navpoint->content = g_strdup_printf ("%s%s", doc->content_base, split[0]);
+
+                g_strfreev (split);
+                g_free (tmpuri);
+            }
+
+            if (!g_strcmp0 ((const gchar *)navchilds->name, "navLabel")) {
+                xmlNode *text = gepub_utils_get_element_by_tag (navchilds, "text");
+                if (text->children && text->children->type == XML_TEXT_NODE) {
+                  navpoint->label = g_strdup ((gchar *)text->children->content);
+                }
+            }
+
+            navchilds = navchilds->next;
+        }
+
+        toc = g_list_prepend (toc, navpoint);
+        item = item->next;
+    }
+
+    toc = g_list_sort (toc, (GCompareFunc) navpoint_compare);
+
+    xmlFreeDoc (xdoc);
+    g_bytes_unref (toc_data);
+    return toc;
+}
 
 static void
 epub_document_finalize (GObject *object)
@@ -1840,6 +1986,10 @@ epub_document_finalize (GObject *object)
 		g_free (epub_document->documentdir);
 		epub_document->documentdir = NULL;
 	}
+    if (epub_document->gepub_doc) {
+        g_free(epub_document->gepub_doc);
+        epub_document->gepub_doc = NULL;
+    }
 	G_OBJECT_CLASS (epub_document_parent_class)->finalize (object);
 }
 

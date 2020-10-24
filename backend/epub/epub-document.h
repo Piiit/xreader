@@ -10,7 +10,14 @@ G_BEGIN_DECLS
 #define EPUB_DOCUMENT(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), EPUB_TYPE_DOCUMENT, EpubDocument))
 #define EPUB_IS_DOCUMENT(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), EPUB_TYPE_DOCUMENT))
 
+struct _GepubNavPoint {
+    gchar *label;
+    gchar *content;
+    guint64 playorder;
+};
+
 typedef struct _EpubDocument EpubDocument;
+typedef struct _GepubNavPoint GepubNavPoint;
 
 GType                 epub_document_get_type (void) G_GNUC_CONST;
 
