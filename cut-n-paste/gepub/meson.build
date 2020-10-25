@@ -9,7 +9,7 @@ gepub_sources = [
 gepub_deps = [
   config_h,
   glib,
-  dependency('webkit2gtk-4.0'),
+  webkit,
   dependency('libsoup-2.4'),
   dependency('gobject-2.0'),
   dependency('gio-2.0'),
