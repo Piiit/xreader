@@ -3,7 +3,8 @@ gepub_sources = [
   'gepub-doc.c',
   'gepub-text-chunk.c',
   'gepub-utils.c',
-  'gepub-widget.c'
+  'gepub-widget.c',
+  'gepub-utils.c'
 ]
 
 gepub_deps = [
@@ -20,6 +21,6 @@ gepub_deps = [
 libgepub = static_library(
   'libgepub',
   gepub_sources,
-  include_directories: include_root,
+  include_directories: include_dirs,
   dependencies: gepub_deps,
 )

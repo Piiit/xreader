@@ -17,8 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-
+#include <config.h>
 #include <libxml/tree.h>
 #include <libxml/HTMLparser.h>
 #include <string.h>
@@ -55,6 +54,7 @@ static void gepub_doc_fill_spine (GepubDoc *doc);
 static void gepub_doc_fill_toc (GepubDoc *doc, gchar *toc_id);
 static void gepub_doc_initable_iface_init (GInitableIface *iface);
 static gint navpoint_compare (GepubNavPoint *a, GepubNavPoint *b);
+static GepubNavPoint *gepub_parse_navpoint (xmlNodePtr node, const gchar *basepath, guint64 *navpoint_count);
 
 struct _GepubDoc {
     GObject parent;
@@ -366,6 +366,7 @@ gepub_doc_fill_toc (GepubDoc *doc, gchar *toc_id)
     gsize size;
     GList *toc = NULL;
     GBytes *toc_data = NULL;
+    guint64 navpoint_count = 0;
 
     doc->toc = toc;
 
@@ -385,58 +386,14 @@ gepub_doc_fill_toc (GepubDoc *doc, gchar *toc_id)
     item = mapnode->children;
     while (item) {
         GepubNavPoint *navpoint = NULL;
-        gchar *order;
-        xmlNode *navchilds = NULL;
 
-        if (item->type != XML_ELEMENT_NODE ||
-            g_strcmp0 ((const gchar *)item->name, "navPoint")) {
+        if (item->type != XML_ELEMENT_NODE || !gepub_utils_element_is_a(item, "navPoint")) {
             item = item->next;
             continue;
         }
 
-        navpoint = g_malloc0 (sizeof (GepubNavPoint));
-
-        order = gepub_utils_get_prop (item, "playOrder");
-        if (order) {
-            g_ascii_string_to_unsigned (order, 10, 0, INT_MAX,
-                                        &navpoint->playorder, NULL);
-            g_free (order);
-        }
-
-        // parsing navPoint->navLabel->text and navPoint->content
-        navchilds = item->children;
-        while (navchilds) {
-            if (item->type != XML_ELEMENT_NODE) {
-                navchilds = navchilds->next;
-                continue;
-            }
-
-            if (!g_strcmp0 ((const gchar *)navchilds->name, "content")) {
-                gchar **split;
-                gchar *tmpuri;
-                tmpuri = gepub_utils_get_prop (navchilds, "src");
-                // removing # params. Maybe we should store the # params in the
-                // navpoint to use in the future if the doc references to a position
-                // inside the chapter
-                split = g_strsplit (tmpuri, "#", -1);
-
-                // adding the base path
-                navpoint->content = g_strdup_printf ("%s%s", doc->content_base, split[0]);
-
-                g_strfreev (split);
-                g_free (tmpuri);
-            }
-
-            if (!g_strcmp0 ((const gchar *)navchilds->name, "navLabel")) {
-                xmlNode *text = gepub_utils_get_element_by_tag (navchilds, "text");
-                if (text->children && text->children->type == XML_TEXT_NODE) {
-                  navpoint->label = g_strdup ((gchar *)text->children->content);
-                }
-            }
-
-            navchilds = navchilds->next;
-        }
-
+        navpoint = gepub_parse_navpoint(item, doc->content_base, &navpoint_count);
+        navpoint_count++;
         toc = g_list_prepend (toc, navpoint);
         item = item->next;
     }
@@ -445,6 +402,59 @@ gepub_doc_fill_toc (GepubDoc *doc, gchar *toc_id)
 
     xmlFreeDoc (xdoc);
     g_bytes_unref (toc_data);
+}
+
+static GepubNavPoint *
+gepub_parse_navpoint (xmlNodePtr node, const gchar *basepath, guint64 *navpoint_count)
+{
+    GepubNavPoint *navpoint = g_malloc0 (sizeof (GepubNavPoint));
+
+    gchar *order = gepub_utils_get_prop (node, "playOrder");
+    if (order) {
+        g_ascii_string_to_unsigned (order, 10, 0, INT_MAX,
+                                    &navpoint->playorder, NULL);
+        g_free (order);
+    } else {
+        (*navpoint_count)++;
+        navpoint->playorder = *navpoint_count;
+    }
+
+    xmlNodePtr navchilds = node->children;
+
+    while (navchilds) {
+        if (navchilds->type != XML_ELEMENT_NODE) {
+            navchilds = navchilds->next;
+            continue;
+        }
+
+        if (gepub_utils_element_is_a(navchilds, "content")) {
+            gchar **split;
+            gchar *tmpuri;
+            tmpuri = gepub_utils_get_prop (navchilds, "src");
+            // removing # params. Maybe we should store the # params in the
+            // navpoint to use in the future if the doc references to a position
+            // inside the chapter
+            split = g_strsplit (tmpuri, "#", -1);
+
+            // adding the base path
+            navpoint->content = g_strdup_printf ("%s%s", basepath, split[0]);
+
+            g_strfreev (split);
+            g_free (tmpuri);
+        } else if (gepub_utils_element_is_a(navchilds, "navLabel")) {
+            xmlNode *text = gepub_utils_get_element_by_tag (navchilds, "text");
+            if (text->children && text->children->type == XML_TEXT_NODE) {
+                navpoint->label = g_strdup ((gchar *)text->children->content);
+            }
+        } else if (gepub_utils_element_is_a(navchilds, "navPoint")) {
+            navpoint->children = g_list_prepend(navpoint->children, gepub_parse_navpoint(navchilds, basepath, navpoint_count));
+        }
+
+        navchilds = navchilds->next;
+    }
+
+    navpoint->children = g_list_sort (navpoint->children, (GCompareFunc) navpoint_compare);
+    return navpoint;
 }
 
 /**
@@ -1027,4 +1037,3 @@ gepub_doc_resource_id_to_chapter (GepubDoc *doc,
 
     return -1;
 }
-

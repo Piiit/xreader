@@ -303,3 +303,16 @@ gepub_utils_get_prop (xmlNode *node, const gchar *prop)
 
     return ret;
 }
+
+/**
+ * gepub_utils_element_is_a:
+ * @node: an #xmlNode
+ * @name: the tag name
+ *
+ * Returns: True, if the @node has the name @name
+ */
+gboolean
+gepub_utils_element_is_a (xmlNode *node, const gchar *name)
+{
+    return g_strcmp0 ((const gchar *)node->name, name) == 0;
+}

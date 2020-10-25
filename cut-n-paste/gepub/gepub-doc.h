@@ -44,6 +44,7 @@ struct _GepubNavPoint {
     gchar *label;
     gchar *content;
     guint64 playorder;
+    GList *children;
 };
 
 typedef struct _GepubResource GepubResource;
@@ -115,4 +116,3 @@ G_END_DECLS
 #define GEPUB_META_DESC "description"
 
 #endif /* __GEPUB_DOC_H__ */
-

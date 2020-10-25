@@ -11,6 +11,7 @@ epub_deps = [
     gtk,
     xml,
     minizip_dep,
+    webkit
 ]
 
 shared_module(
