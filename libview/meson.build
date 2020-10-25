@@ -82,7 +82,6 @@ libview_include_directories = [
 
 if get_option('epub')
    libview_deps += webkit
-   libview_deps += gepub
    libview_include_directories += epub_includes
 endif
 

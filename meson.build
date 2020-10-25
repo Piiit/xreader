@@ -83,7 +83,6 @@ if get_option('ps')
 endif
 if get_option('epub')
     webkit = dependency('webkit2gtk-4.0', version: '>= 2.4.3')
-    gepub = cc.find_library('gepub-0.6')
 endif
 
 # on some systems we need to find the math lib to make sure it builds
