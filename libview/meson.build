@@ -76,15 +76,21 @@ libview_deps = [
     math,
 ]
 
+libview_include_directories = [
+    include_dirs,
+]
+
 if get_option('epub')
    libview_deps += webkit
    libview_deps += gepub
+   libview_include_directories += epub_includes
 endif
+
 
 libview = library(
     'xreaderview',
     libview_sources + libview_private_headers + libdoc_enums + libview_marshal,
-    include_directories: include_dirs,
+    include_directories: libview_include_directories,
     dependencies: libview_deps,
     soversion: binary_major_version,
     version: binary_version,

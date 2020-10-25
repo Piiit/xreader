@@ -11,7 +11,6 @@ epub_deps = [
     gtk,
     xml,
     minizip_dep,
-    gepub
 ]
 
 shared_module(
@@ -20,7 +19,7 @@ shared_module(
     link_with: [libdocument],
     link_whole: minizip,
     link_args: ['-Wl,-Bsymbolic', '-Wl,-z,relro', '-Wl,-z,now'],
-    include_directories: include_dirs,
+    include_directories: [epub_includes, include_dirs],
     dependencies: epub_deps,
     install: true,
     install_dir: backendsdir,

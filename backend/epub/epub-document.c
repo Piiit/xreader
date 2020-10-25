@@ -32,7 +32,7 @@
 #include <libxml/xmlmemory.h>
 #include <libxml/HTMLparser.h>
 #include <config.h>
-#include <libgepub-0.6/gepub.h>
+#include "gepub.h"
 
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
@@ -104,10 +104,6 @@ EV_BACKEND_REGISTER_WITH_CODE (EpubDocument, epub_document,
                                  epub_document_document_links_iface_init);
 
 	} );
-
-gchar *   gepub_utils_get_prop            (xmlNode *node, const gchar *prop);
-xmlNode * gepub_utils_get_element_by_tag  (xmlNode *node, const gchar *name);
-
 
 static void
 epub_document_thumbnails_get_dimensions (EvDocumentThumbnails *document,
@@ -1804,22 +1800,19 @@ epub_document_load (EvDocument* document,
     epub_document->docTitle =  gepub_doc_get_metadata (epub_document->gepub_doc, GEPUB_META_TITLE);
     printf("TITLE %s\n", epub_document->docTitle);
 
-	// epub_document->index = setup_document_index(epub_document,contentOpfUri);
-    xmlDoc *xdoc = NULL;
-    xmlNode *root_element = NULL;
-    xmlNode *snode = NULL;
-    const char *data;
-    gsize size;
+	epub_document->index = setup_document_index(epub_document,contentOpfUri);
 
-    data = g_bytes_get_data (epub_document->gepub_doc->content, &size);
-    xdoc = xmlRecoverMemory (data, size);
-    root_element = xmlDocGetRootElement (xdoc);
-    snode = gepub_utils_get_element_by_tag (root_element, "spine");
-    gchar *toc = gepub_utils_get_prop (snode, "toc");
-    if (toc) {
-        epub_document->index = gepub_doc_fill_toc(epub_document->gepub_doc, toc, epub_document->index);
-        g_free (toc);
-    }
+    printf("LENGTH %d\n", g_list_length(epub_document->index));
+
+    // GList *l;
+    // for (l = epub_document->index; l != NULL; l = l->next)
+    // {
+    //     // do something with l->data
+    // }
+
+    // epub_document->index = gepub_doc_get_toc(epub_document->gepub_doc);
+
+    // printf("LENGTH %d\n", g_list_length(epub_document->index));
 
 	epub_document->contentList = setup_document_content_list (contentOpfUri,&err,epub_document->documentdir);
 
@@ -1850,103 +1843,6 @@ epub_document_init (EpubDocument *epub_document)
     epub_document->gepub_doc = NULL;
 }
 
-// Copy/paste from gepub
-static gint
-navpoint_compare (GepubNavPoint *a, GepubNavPoint *b)
-{
-    return a->playorder - b->playorder;
-}
-
-// Copy/paste from gepub
-static GList *
-gepub_doc_fill_toc (GepubDoc *doc, gchar *toc_id, GList *toc)
-{
-    xmlDoc *xdoc = NULL;
-    xmlNode *root_element = NULL;
-    xmlNode *mapnode = NULL;
-    xmlNode *item = NULL;
-    const char *data;
-    gsize size;
-    GBytes *toc_data = NULL;
-
-    toc_data = gepub_doc_get_resource_by_id (doc, toc_id);
-    if (!toc_data) {
-        return;
-    }
-
-    data = g_bytes_get_data (toc_data, &size);
-    xdoc = xmlRecoverMemory (data, size);
-    root_element = xmlDocGetRootElement (xdoc);
-    mapnode = gepub_utils_get_element_by_tag (root_element, "navMap");
-
-    // TODO: get docTitle
-    // TODO: parse metadata (dtb:totalPageCount, dtb:depth, dtb:maxPageNumber)
-
-    item = mapnode->children;
-    while (item) {
-        GepubNavPoint *navpoint = NULL;
-        gchar *order;
-        xmlNode *navchilds = NULL;
-
-        if (item->type != XML_ELEMENT_NODE ||
-            g_strcmp0 ((const gchar *)item->name, "navPoint")) {
-            item = item->next;
-            continue;
-        }
-
-        navpoint = g_malloc0 (sizeof (GepubNavPoint));
-
-        order = gepub_utils_get_prop (item, "playOrder");
-        if (order) {
-            g_ascii_string_to_unsigned (order, 10, 0, INT_MAX,
-                                        &navpoint->playorder, NULL);
-            g_free (order);
-        }
-
-        // parsing navPoint->navLabel->text and navPoint->content
-        navchilds = item->children;
-        while (navchilds) {
-            if (item->type != XML_ELEMENT_NODE) {
-                navchilds = navchilds->next;
-                continue;
-            }
-
-            if (!g_strcmp0 ((const gchar *)navchilds->name, "content")) {
-                gchar **split;
-                gchar *tmpuri;
-                tmpuri = gepub_utils_get_prop (navchilds, "src");
-                // removing # params. Maybe we should store the # params in the
-                // navpoint to use in the future if the doc references to a position
-                // inside the chapter
-                split = g_strsplit (tmpuri, "#", -1);
-
-                // adding the base path
-                // TODO PEMOSER navpoint->content = g_strdup_printf ("%s%s", doc->content_base, split[0]);
-
-                g_strfreev (split);
-                g_free (tmpuri);
-            }
-
-            if (!g_strcmp0 ((const gchar *)navchilds->name, "navLabel")) {
-                xmlNode *text = gepub_utils_get_element_by_tag (navchilds, "text");
-                if (text->children && text->children->type == XML_TEXT_NODE) {
-                  navpoint->label = g_strdup ((gchar *)text->children->content);
-                }
-            }
-
-            navchilds = navchilds->next;
-        }
-
-        toc = g_list_prepend (toc, navpoint);
-        item = item->next;
-    }
-
-    toc = g_list_sort (toc, (GCompareFunc) navpoint_compare);
-
-    xmlFreeDoc (xdoc);
-    g_bytes_unref (toc_data);
-    return toc;
-}
 
 static void
 epub_document_finalize (GObject *object)

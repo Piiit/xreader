@@ -147,6 +147,7 @@ struct _EvWindowPrivate {
     GtkWidget *sidebar_bookmarks;
 #if ENABLE_EPUB
     GtkWidget *webview;
+    GtkWidget *webview2;
 #endif
     /* Settings */
     GSettings *settings;
@@ -7590,6 +7591,7 @@ ev_window_init (EvWindow *ev_window)
 
 #if ENABLE_EPUB /*The webview, we won't add it now but it will replace the xreader-view if a web(epub) document is encountered.*/
     ev_window->priv->webview = ev_web_view_new();
+    ev_window->priv->webview2 = //PEMOSER
     ev_web_view_set_model(EV_WEB_VIEW(ev_window->priv->webview),ev_window->priv->model);
 #endif
     page_cache_mb = g_settings_get_uint (ev_window_ensure_settings (ev_window),

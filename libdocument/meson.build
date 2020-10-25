@@ -128,7 +128,7 @@ libdocument = library(
     libdocument_private_headers + libdocument_sources,
     dependencies: libdocument_deps,
     include_directories: [include_root, synctex_includes],
-    link_whole: [libsynctex],
+    link_whole: [libsynctex, libgepub],
     soversion: binary_major_version,
     version: binary_version,
     install: true,

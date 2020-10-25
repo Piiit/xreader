@@ -17,7 +17,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <config.h>
+#include "config.h"
+
 #include <libxml/tree.h>
 #include <libxml/HTMLparser.h>
 #include <string.h>
